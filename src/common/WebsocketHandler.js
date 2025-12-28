@@ -1,0 +1,200 @@
+
+import MyEventTarget from "./Event";
+
+export class WebsocketHandler extends MyEventTarget{
+    /**
+     * @type {WebSocket}
+     */
+    websocket;
+    //List of pending messages to send to the websocket
+    messageQueue=[];
+    event_history=[];
+    onMessageFns=new Set();
+    #blocked = true;
+    #ready=false; //If websocket handshake is done and messages can be sent
+    connected=true; //If websocket is connected with the server (including handshake stage)
+    #url;#protocols;
+    constructor(url,protocols){
+        super();
+        this.#url=url;
+        this.#protocols=protocols;
+        this.websocket = new WebSocket(url,protocols);
+        this.#setCloseEvents();
+    }
+    #setCloseEvents(){
+        this.websocket.addEventListener("close",e=>{
+            this.connected = false;
+            console.log("Websocket closed. Attempting to reconnect adding a 10% delay each time", e);
+            this.#reopenLoop();
+        })
+    }
+    #reopens = 0;
+    async #reopenLoop(){
+        return this.reopen()
+        .then(e=>{
+            this.#reopens = 0;
+            this.#setCloseEvents();
+            this._handshake();
+            console.log("Reopened");
+        })
+        .catch(e=>{
+            setTimeout(()=>this.#reopenLoop(),1000*(1.1)**this.#reopens);
+            this.#reopens++
+        })
+
+    }
+    /**
+     * Basic handshake, common for all clients. Responsible for synchronizing the client with any past events and waiting for
+     * the READY message. After that, unblocks the messaging loop
+     */
+    async _handshake(){
+        this.reconnect_attempts = 0;
+        this.connected = true;
+
+        await new Promise(r=>{
+            switch(this.websocket.readyState){
+                case WebSocket.OPEN:
+                    return r(this.websocket);
+                case WebSocket.CONNECTING:
+                    return this.websocket.addEventListener("open",r)
+                case WebSocket.CLOSING:
+                case WebSocket.CLOSED:
+                    console.log("Closing or closed");
+                    return;
+            }
+        });
+        this.websocket.send("SYNC");
+
+        await new Promise((r,j)=>{
+            const syncF = e=>{
+                let data;
+                try{
+                    data = JSON.parse(e.data);
+                }catch(err){return j("Unexpected: Sync data couldn't be parsed: " + JSON.stringify(e.data))}
+
+                this.parseSyncData(data);
+                
+                this.websocket.removeEventListener("message",syncF);
+                r();
+            };
+            this.websocket.addEventListener("message",syncF);
+        });
+        
+        this.websocket.send("READY");
+
+        //Start the basic message listener
+        this.websocket.addEventListener("message",e=>{
+            if(e.data=="ACK")this.blocked = false;
+            else try{e=JSON.parse(e.data)}
+            catch(e){return}
+            this.do("message",e);
+            this.websocket.send("ACK");
+        })
+        //Wait for start to unblock the messages
+        const startF = e=>{
+            if(e.data=="START"){
+                this.#ready = true;
+                this.blocked = false;
+                this.websocket.removeEventListener("message",startF);
+                this.do("handshake-finished");
+            }
+        };
+        this.websocket.addEventListener("message",startF);
+    }
+    parseSyncData(data){
+        for(let i of Object.keys(data)){
+            //Parses connections
+            for(let c=0;c<data[i].connections;c++)this.do("message",{type:"connected",table:i});
+            
+            //Parses orders
+            for(let m of data[i].orders){
+                m.table = i;
+                m.type = "create-order";
+                this.do("message",m);
+            }
+        }
+    }
+    #reconnectPromise;
+    /**
+     * 
+     * @returns {Promise}
+     */
+    reopen(){
+        //If it's connecting or opening (generally not closed or closing) then don't do anything
+        if(![WebSocket.CLOSING,WebSocket.CLOSED].includes(this.websocket.readyState))return false;
+        //If there is already a reconnecting promise, return that one
+        if(this.#reconnectPromise)return this.#reconnectPromise;
+
+        try{
+        //Open the new WebSocket object
+        this.websocket = new WebSocket(this.#url,this.#protocols);
+            
+        }catch(e){console.log("Error making ws:",e)}
+
+        //Return a promise that resolves if the new WebSocket opens, and rejects if it closes
+        return this.#reconnectPromise = new Promise((s,j)=>{
+            //Function generator that empties the existing reconnect promise and resolves/rejects it
+            const f = (s)=>e=>{
+                this.#reconnectPromise=null;
+                s(e);
+            };
+
+            this.websocket.addEventListener("open",f(s));
+            this.websocket.addEventListener("error",f(j));
+            this.websocket.addEventListener("close",f(j));
+        });
+    }
+    get blocked(){return this.#blocked}
+    set blocked(v){if(!this.#ready)return;
+        v=!!v;
+        this.#blocked=v;
+        //If we are setting it to unblocked, immediately send the next message in the queue
+        if(!v)setTimeout(()=>this.#sendNext(),1);
+    }
+    async #sendNext(){
+        if(this.#blocked||this.messageQueue.length<=0)return false;
+        if(this.websocket.readyState==WebSocket.CLOSED)try{
+            await this.reopen();
+        }catch(e){console.log(e)}
+        if(this.websocket.readyState==WebSocket.CONNECTING){
+            try{
+                await new Promise((s,j)=>{
+                    this.websocket.addEventListener("open",s);
+                    this.websocket.addEventListener("error",j);
+                    this.websocket.addEventListener("close",j);
+                });
+            }
+            catch(e){
+                return console.log("Websocket state change while trying to connect: ", e);
+            }
+        }
+
+        //Send the message
+        const msg = this.messageQueue.shift();
+        this.websocket.send(msg[0]);
+
+        //Wait for the server response
+        const responseF = e=>{
+            this.websocket.removeEventListener("message",responseF);
+            this.blocked=false;
+
+            if(typeof e.data !== "string")return msg[2]("Receieved non-string response: ", e.data);
+            if(e.data.startsWith("NO"))return msg[2](e.data.slice(3));
+            if(e.data=="ACK")return msg[1]("ACK");
+        }
+        this.websocket.addEventListener("message",responseF);
+        return this.blocked = true;
+    }
+    send(msg){
+        if(msg instanceof Object)msg = JSON.stringify(msg);
+        if(this.messageQueue.length>10)console.warn(`Message queue length exceeded 10 for a websocket`);
+        return new Promise((s,j)=>{
+            this.messageQueue.push([msg,s,j]);
+            
+            //If not blocked, send the message, initiating an ACK chain
+            if(!this.#blocked)this.#sendNext();
+        })
+    }
+}
+//Get a promise that resolves after the handshake is done
+WebsocketHandler.connect = wsh=>new Promise(r=>wsh._handshake(false,[],r));

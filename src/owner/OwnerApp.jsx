@@ -1,0 +1,109 @@
+import MyEventTarget, { EventComponent } from "../common/Event";
+import { ListenerClientHandler } from "../common/ListenerSocket";
+import { Route, Routes, useParams } from "react-router";
+import OwnerApp2 from "./App2";
+import LayoutSVG from "./LayoutSVG";
+import LayoutDesigner from "./LayoutDesigner";
+import { PlaceSession } from "../common/VirtualSessions";
+import PlaceSelection from "../dashboard/PlaceSelection";
+import DashboardTopbar from "../dashboard/DashboardTopbar";
+import Dashboard from "../dashboard/Dashboard";
+import React, { useState } from "react";
+import OwnerApp3 from "./App3";
+import LayoutEditor from "./LayoutEditor";
+import MobileApp from "./MobileApp";
+
+const PLACE_REGEX = /^[A-Za-z0-9_-]{36}$/g;
+function OwnerRouter(){
+    const path = location.pathname.split("/");
+    path.shift();
+    
+    if(path.at(-1).match(PLACE_REGEX))return <OwnerApp2 placeId={path.at(-1)}/>
+    else return <div>"404"</div>;
+}
+
+class DashboardRouter extends React.Component{
+    constructor(props){
+        super(props);
+    }
+    render(){
+        return  <Routes key="main">
+            <Route path="" element={<PlaceSelection/>}/>
+            <Route path=":id/edit-layout" element={<this._LayoutEditor/>}/>
+            <Route path="watch/:id/*" element={<this._Watch/>}/>
+            <Route path=":id/*" element={<this._Dashboard/>}/>
+        </Routes>
+    }
+    _LayoutEditor(){
+        const {id} = useParams();
+        return <LayoutEditor/>
+    }
+    _Dashboard(){
+        const {id} = useParams();
+        return <Dashboard placeId={id}/>
+    }
+    _Watch(){
+        const [_,redraw] = useState(0);
+        const {id} = useParams();
+        const match = window.matchMedia('(pointer: fine)');
+        const shouldShowPCApp = match.matches;
+        match.addEventListener("change",()=>redraw(_+1));
+
+        console.log(shouldShowPCApp)
+        return shouldShowPCApp?<OwnerApp3 placeId={id}/>:<MobileApp placeId={id}/>;
+    }
+}
+
+                // <Route path="watch/*" element={<OwnerRouter/>}/>
+                // <Route path="layout" element={<LayoutDesigner/>}/>
+
+export default class OwnerApp extends EventComponent{
+    /**
+     * @type {OwnerApp}
+     */
+    static instance;
+
+    #onclose=()=>{};
+    wsh;
+    placeSession;
+    sessions={};
+    /**
+     * @type {LayoutSVG}
+     */
+    layoutSVG;
+    history=[];
+    //layoutManager;
+    constructor(props){
+        super(props);
+
+        window.listenerInstance = OwnerApp.instance = this;
+
+        document.title = "Διαχείρηση επιχείρησης";
+        this.state={popup:false}
+    }
+    popup(popup,onClose){
+        this.#onclose();
+        if(this.state.popup.oncloseaspopup instanceof Function)this.state.popup.oncloseaspopup();
+        this.setState({popup});
+
+        if(onClose)this.#onclose = onClose;
+    }
+    onClick(e){
+        if(e.target&&e.target.classList.contains("popup-background")||e.target.classList.contains("popup-wrapper"))
+            this.popup(false)
+    }
+    render(){
+        return <div className="dashboard-page-main" key="main">
+                    {this.state.popup?
+                    <div className="popup-background" onMouseDown={e=>this.onClick(e)}>
+                        <div className="popup-wrapper">
+                            {this.state.popup}
+                        </div>
+                    </div>
+                    :null}
+                    <DashboardTopbar key="topbar"/>
+                    <DashboardRouter/>
+                </div>;
+    }
+}
+window.OwnerApp = OwnerApp;

@@ -1,0 +1,38 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="/style.css"/>
+    <title>Savor</title>
+        <style>
+      #loading-screen{
+        position: fixed;
+        top:50%;
+        left: 50%;
+        transform: translate(-50%,-50%);
+        font-size: 5em;
+        animation: loading-screen 1s alternate infinite;
+        user-select: none;
+      }
+      @keyframes loading-screen {
+        from{color:black}
+        to{color:#aaa}
+      }
+    </style>
+    <script type="module">
+  import RefreshRuntime from '/@react-refresh'
+  RefreshRuntime.injectIntoGlobalHook(window)
+  window.$RefreshReg$ = () => {}
+  window.$RefreshSig$ = () => (type) => type
+  window.__vite_plugin_react_preamble_installed__ = true
+</script>
+</head>
+<body>
+    <div id="root"></div>
+    <div id="loading-screen">Savor</div>
+    <script>
+      window.loadingElement = document.querySelector("#loading-screen");
+    </script>
+    <script type="module" src="/src/place/main.jsx"></script>
+  </body>
+</html>

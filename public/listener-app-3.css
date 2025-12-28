@@ -1,0 +1,191 @@
+#root::backdrop{
+    background: white;
+}
+
+.listener-app-3{
+    display: grid;
+    grid-template-columns: 1fr 3fr 1fr;
+    grid-template-rows: 55% 45%;
+
+    max-height: 100%;
+    overflow: hidden;
+}
+
+.listener-top-center{
+    grid-row:1;
+}
+.listener-bottom-center{
+    grid-row:2;
+}
+.listener-top-center,.listener-bottom-center{
+    grid-column: 2;
+}
+.listener-full-left{
+    grid-column: 1;
+    grid-row: 1/3;
+    border-right: 1px solid;
+}
+.listener-full-right{
+    grid-column: 3;
+    grid-row: 1/3;
+    border-left: 1px solid;
+}
+.listener-bottom{
+    display: grid;
+    grid-template-columns: 1fr 2fr 1fr;
+}
+.table-session-viewer{
+    display: grid;
+    grid-template-columns: 1fr 3fr;
+    height:100%;
+    max-height:100%;
+    grid-auto-rows:100%;
+}
+.table-session-viewer .left{
+    border-right:1px solid;
+    display: grid;
+    grid-template-rows: 70px 1fr;
+}
+.table-session-viewer .left h2{
+    text-align: center;
+    margin: auto;
+}
+.order-history-container{
+    display: flex;
+    flex-direction: column;
+    border-top:1px solid;
+    height:100%;
+    overflow-y: auto;
+    overflow-x: hidden;
+    max-height: 100%;
+}
+.history-order{
+    border-bottom:1px solid;
+    padding: 8px;
+    transition: background-color .3s ease;
+}
+.history-order:hover{
+    background-color: #eee;
+}
+.pending-order{
+    animation:blink-active-order 2s alternate infinite;
+}
+@keyframes blink-active-order{
+    from{background-color: #f001;}
+    to{background-color: #f003;}
+}
+.no-orders{
+    padding: 8px;
+    color:#aaa;
+    font-style: italic;
+    text-align: center;
+}
+
+.order-overview{
+    display: grid;
+    grid-template-rows: 1fr min(max(25%, 30px), 50px);
+    max-height: 100%;
+    overflow: hidden;
+    padding-bottom: 10px;
+    gap:10px;
+}
+.order-overview.empty{
+    display: flex;
+    justify-content: center;
+    text-align: center;
+    flex-direction: column;
+}
+.order-overview-main{
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-around;
+    align-items: center;
+
+    padding: 10px;
+    gap: 10px;
+    overflow-y: auto;
+    max-width: 100%;
+    max-height: 100%;
+}
+.order-overview-main .order-overview-dish{
+    border:1px solid;
+    border-radius: 8px;
+    padding: 12px;
+    width: min-content;
+    height:max-content;
+    max-width: 100%;
+    overflow: hidden;
+
+    --cc:1;
+}
+.order-overview-dish .title{
+    font-size: large;
+    white-space: nowrap;
+    text-align: center;
+}
+.order-overview-dish .comment{
+    font-size: smaller;
+    text-align: justify;
+    margin: auto;
+    overflow-y: auto;
+    max-height: 100px;
+    width: auto;
+}
+.order-overview-dish .comment::-webkit-scrollbar{
+    width:0;
+    visibility: collapse;
+}
+.order-overview-dish .comment.empty{
+    text-align: center;
+    color:#aaa;
+    font-style: italic;
+}
+
+.order-overview-dish > ul{
+    column-count: var(--cc);
+    column-gap: 40px;
+    width: max-content;
+    justify-self: center;
+    padding: 0 20px;
+}
+
+.order-overview-bottom{
+    display: flex;
+    justify-content: space-around;
+
+    --gap: 15px;
+    gap: var(--gap);
+    padding: 0 var(--gap);
+}
+.order-overview-bottom button{
+    padding: 12px;
+    flex-grow: 1;
+    border: 0;
+    border-radius: 8px;
+    margin: auto;
+    font-size: large;
+    transition: background-color .3s ease;
+    background-color: var(--bg);
+}
+.order-overview-bottom button.order-accept{
+    --bg:hsl(145, 50%, 50%);
+}
+.order-overview-bottom button.order-reject{
+    --bg:hsl(0, 50%, 50%);
+}
+.order-overview-bottom button.order-deliver{
+    --bg:hsl(0, 0%, 50%);
+}
+.order-overview-bottom button:hover{
+    background-color: color-mix(in hsl shorter hue, var(--bg) 90%, black 10%)
+}
+.order-complete{
+    font-size: large;
+    place-content: center;
+}
+
+@media screen and (max-height:500px) {
+    .dashboard-page-main{
+        --topbar-height:40px;
+    }
+}

@@ -1,0 +1,22 @@
+.particle-div:not(.stopped) svg .confetti {
+    fill:hsl(var(--hue), 100%, 50%);   
+}
+.particle-div.stopped svg .confetti{
+    animation: none;
+    visibility: hidden;
+}
+.confetti.radial{
+    animation: radial-emit 2s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+    transform-origin: center;
+}
+
+@keyframes radial-emit {
+    0% { 
+        transform: rotate(var(--angle)) translateY(0);
+        opacity: 1;
+    }
+    100% { 
+        transform: rotate(var(--angle)) translateY(calc(50px * var(--speed)));
+        opacity: 0;
+    }
+}
