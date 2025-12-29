@@ -235,7 +235,6 @@ export default class LayoutSVG extends EventComponent{
         ref={this.#svgRef}
         className={this.state.viewOnly?"view-only":null}
         onClick={e=>{
-            console.log(e.target)
             e.target instanceof SVGSVGElement?this.selectedTable=false:null
         }}
         > 

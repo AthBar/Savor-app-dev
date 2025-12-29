@@ -215,7 +215,7 @@ class IngredientChanger extends React.Component{
             <hr/>
             <div style={{display:"flex"}}>
                 <button className="green-wide-button" onClick={()=>this.trySaveAndClose()}>OK</button>
-                <button className="ingredient-delete-button" onClick={()=>this.delete()}>Διαγραφή</button>
+                <button className="delete-button" onClick={()=>this.delete()}>Διαγραφή</button>
             </div>
         </div>
     }

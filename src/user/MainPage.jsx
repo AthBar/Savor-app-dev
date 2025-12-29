@@ -76,18 +76,20 @@ function HeaderForAll({Y}){
 
 function OrderPreview({cart}){
     let total = 0;
-    for(let i of cart)total+=UserApp.instance.calculatePrice(i);
+    const entries = Object.values(cart);
+    const count = entries.length;
+    for(let i of entries)total+=UserApp.instance.calculatePrice(i);
 
-    return <div className={"order-sender"+(cart.length<=0?" empty":"")}>
+    return <div className={"order-sender"+(count<=0?" empty":"")}>
         <div className="item-details">
-            <div className="cart-total">{cart.length==1?"1 αντικείμενο":(cart.length+" αντικείμενα")}</div>
+            <div className="cart-total">{count==1?"1 αντικείμενο":(count+" αντικείμενα")}</div>
             <div className="price-tag">{currency(total)}</div>
         </div>
         <div className="gotocart-buttons">
             <button className="del" onClick={()=>UserApp.instance.emptyCart()}>
                 <img src="/delete.svg"/>
             </button>
-            <MyOrderSendButton/>
+            <MyOrderSendButton cart={cart}/>
         </div>
     </div>
 }
@@ -98,6 +100,7 @@ export default class MainPage extends React.Component{
     constructor(props){
         super(props);
         addEventListener("scroll",this.#f);
+        UserApp.instance.tableSession.on("change",()=>this.forceUpdate())
     }
     componentWillUnmount(){
         removeEventListener("scroll",this.#f);
@@ -111,7 +114,7 @@ export default class MainPage extends React.Component{
             <div className="content default">
                 <HeaderForAll Y={Y}/>
                 <MenuComponent menu={UserApp.instance.menu}/>
-                <OrderPreview cart={UserApp.instance.cart}/>
+                <OrderPreview cart={UserApp.instance.tableSession.cart}/>
             </div>
         );
     }

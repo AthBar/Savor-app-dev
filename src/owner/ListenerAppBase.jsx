@@ -35,7 +35,7 @@ function OrderButtons({order}){
 }
 
 function OrderViewer({order, menu}){
-    const cart = order?.cart;
+    const cart = Object.values(order?.cart||{});
     if(!Array.isArray(cart)||cart.length<=0)return <div className="order-overview empty"></div>
     return <div className="order-overview">
         <div className="order-overview-main">
@@ -73,9 +73,7 @@ export function TableSessionManager({table}){
     const orderList = sess.orders;
 
     if(sess)sess.on("change",()=>redraw(_+1),true);
-    useEffect(()=>{console.log("Change")
-        setOrder(false)
-    },[table]);
+    useEffect(()=>setOrder(false),[table]);
 
     if(!table)return <div className="no-orders">Πατήστε πάνω σε ένα τραπέζι για να δείτε τις παραγγελίες του</div>;
     else return <div className="table-session-viewer">
@@ -96,6 +94,8 @@ export default class ListenerApp extends EventComponent{
 
     menu;
     menuLoaded;
+    menuCategories;
+    menuByCategory;
 
     sessions={};
     blinks={};
@@ -117,20 +117,39 @@ export default class ListenerApp extends EventComponent{
         this.placeSession = new PlaceSession(props.placeId);
         this.layoutSVG = <SynchronizedLayoutSVG key="SVG" placeId={this.placeId} onTableSelect={t=>this.selectTableByCode(t)} placeSession={this.placeSession}/>
 
-        console.log(this.wsh)
+        console.log(this.wsh);
+        this.wsh.on("handshake-finished",()=>this.#sync());
         this.wsh.on("message",this.#f);
 
         ListenerApp.menuPromise = API(`/place/menu/${props.placeId}`).then(r=>{
             const o={};
-            for(let i of r.data)o[i.code]=i;
+            const cats={};
+            const categorized={};
+            for(let i of r.data){
+                o[i.code]=i;
+                cats[i.category] = true;
+                if(categorized[i.category])categorized[i.category].push(i);
+                else categorized[i.category] = [i];
+            }
+            this.menuByCategory = categorized;
+            this.menuCategories = Object.keys(cats);
             this.menu = o;
         });
         ListenerApp.instance = this;
     }
+    #sync(){
+        for(let i of Object.keys(this.wsh.syncData))
+            this.placeSession.getLatestTableSession(i).sync(this.wsh.syncData[i]);
+
+        this.forceUpdate();
+    }
+    #u = ()=>window.requestAnimationFrame(()=>this.forceUpdate());
     componentWillUnmount(){
         this.wsh.off("message",this.#f);
+        this.placeSession.off("change",this.#u);
     }
     componentDidMount(){
+        this.placeSession.on("change",this.#u);
         ListenerApp.menuPromise.then(()=>{
             this.wsh.doHandshake();
             
@@ -138,7 +157,7 @@ export default class ListenerApp extends EventComponent{
         });
     }
     selectTableByCode(selectedTable){
-        if(!selectedTable)this.setState({selectedTable:false});
+        if(!selectedTable)return this.setState({selectedTable:false});
         if(selectedTable.match(/[A-Za-z0-9_-]{1,4}/))this.setState({selectedTable});
     }
     acceptOrder(table){
@@ -150,7 +169,7 @@ export default class ListenerApp extends EventComponent{
     rejectOrder(table,message){
         return this.wsh.send({type:"reject-order",table,message})
     }
-    #onWSMessage(msg){console.log("MSG:",msg)
+    #onWSMessage(msg){
         //Do all types that don't require table first
         switch(msg.type){
             case "state":return msg.open;
@@ -170,9 +189,20 @@ export default class ListenerApp extends EventComponent{
                 this.placeSession.tableDisconnect(table);
                 break;
 
-            case "create-order":
-                this.do("create-order",msg);
-                tbl.createOrder(msg);
+            case "cart-addition":
+                tbl.addToCart(msg.key,msg.entry);
+                break;
+            
+            case "cart-change":
+                tbl.changeInCart(msg.key,msg.newEntry);
+                break;
+            
+            case "cart-removal":
+                tbl.removeFromCart(msg.key);
+                break;
+
+            case "order-sent":
+                tbl.sendOrder();
                 break;
 
             case "cancel-order":

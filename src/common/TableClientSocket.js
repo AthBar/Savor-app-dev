@@ -24,25 +24,6 @@ export default class TableClientClientHandler extends WebsocketHandler{
                 window.UserApp.instance.isOpen = false;
         })
     }
-    parseSyncData(data){
-        //Parses connections
-        for(let c=0;c<data.connections;c++)this.do("message",{type:"connected",table:this.table});
-        
-        //Parses orders
-        //Translates the order data to a simple order creation message with the cart contents and sends it for handling
-        //Then if the order has been accepted creates an oreder acceptance message and also sends it for handling
-        //Same for if the order has been delivered
-        for(let m of data.orders){
-            m.type="create-order";
-            m.table = this.table;
-            if(!m.delivered)UserApp.instance.canOrder=false;
-            this.do("message",m);
-
-            if(m.accepted)this.do("message",{type:"order-accepted"});
-            if(m.delivered)this.do("message",{type:"order-delivered"});
-        }
-        UserApp.instance.paid = data.paid;
-    }
     async sendOrderData(data){
         return UserApp.destinationPromise.then(d=>d?
             UserApp.destinationPromise.then(()=>UserApp.socket.send(data))

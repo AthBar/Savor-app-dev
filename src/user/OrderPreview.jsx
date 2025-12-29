@@ -2,9 +2,9 @@ import React from "react";
 import { useNavigate } from "react-router";
 import UserApp, { currency } from "./MainApp";
 
-export function MyOrderSendButton({inCart}){
+export function MyOrderSendButton({inCart,cart}){
     const goToPage = useNavigate();
-    const disabled = UserApp.instance.cart.length<=0||UserApp.instance.hasActiveOrder;
+    const disabled = cart.length<=0||UserApp.instance.hasActiveOrder;
     const next = disabled?"/store/menu":(inCart?"/store":"/store/cart");
     const text = disabled?"Πίσω":(inCart?`Αποστολή στο τραπέζι ${UserApp.instance.destination.table}`:"Συνέχεια");
 
@@ -22,7 +22,7 @@ export function MyOrderSendButton({inCart}){
 
 export default class OrderPreview extends React.Component{
     render(){
-        const cart = UserApp.instance.cart;
+        const cart = Object.values(UserApp.instance.tableSession.cart);
         if(!this.props.cartMode&&cart.length<=0)return null;
 
         let total = 0;
@@ -34,7 +34,7 @@ export default class OrderPreview extends React.Component{
                 <div className="cart-total">{text}</div>
                 <div className="price-tag">{currency(total)}</div>
             </div>
-            <MyOrderSendButton inCart={this.props.cartMode}/>
+            <MyOrderSendButton inCart={this.props.cartMode} cart={cart}/>
         </div>
     }
 }

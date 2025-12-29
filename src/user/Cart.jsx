@@ -5,23 +5,26 @@ import OrderPreview from "./OrderPreview.jsx";
 import UserApp, { currency } from "./MainApp.jsx";
 import IngredientSelector from "./IngredientSelector.jsx";
 
-function OrderItem({self,entry}){
+function OrderItem({cart,entryKey,menu}){
+    const entry = cart[entryKey];
+    const dish = menu[entry.code];
+    console.log(entryKey)
     return (
         <div className="menu-item">
             <div className="item-title">
                 <div>
-                    {self.title}
+                    {dish.title}
                     <span style={{fontSize:"0.75em"}}>{entry.count>1?` (x${entry.count})`:""}</span>
                 </div>
                 <div>
-                    <button className="info" onClick={()=>CartPage.instance.edit(entry)}>i</button>
-                    <button className="remove" onClick={()=>UserApp.instance.removeFromCart(entry)}>-</button>
+                    <button className="info" onClick={()=>CartPage.instance.edit(entryKey)}>i</button>
+                    <button className="remove" onClick={()=>UserApp.instance.removeFromCart(entryKey)}>-</button>
                 </div>
             </div>
             <hr/>
             <div className="item-details">
                 <div className="item-ingredients">{
-                    self.ingredients.join(", ")
+                    entry.ingredients.join(", ")
                 }</div>
                 <div className="price-tag">
                     {currency(UserApp.instance.calculatePrice(entry))}
@@ -30,16 +33,13 @@ function OrderItem({self,entry}){
         </div>
     )
 }
-function OrderList(){
-    const cart = UserApp.instance.cart;
-    const menu = UserApp.instance.menu;
-
+function OrderList({cart,menu}){
     return (
         <div className="item-list">{
             cart.length<=0?
             "Άδειο καλάθι":
-            cart.map((i,n)=>
-                <OrderItem key={n} self={{...menu[i.code],...i}} entry={i}/>
+            Object.keys(cart).map(key=>
+                <OrderItem key={key} cart={cart} menu={menu} entryKey={key}/>
             )
         }</div>
     )
@@ -101,22 +101,23 @@ export default class CartPage extends React.Component{
         super(props);
         this.state = {};
         CartPage.instance = this;
+        UserApp.instance.tableSession.on("change",()=>this.forceUpdate());
     }
-    edit(entry){
-        this.#editingEntry = entry;
-        IngredientSelector.instance.open(entry);
+    edit(key){
+        this.#editingEntry = key;
+        IngredientSelector.instance.open(UserApp.instance.tableSession.cart[key]);
     }
     editFinished(e){
-        const v = this.#editingEntry;
+        const v = UserApp.instance.tableSession.cart[this.#editingEntry];
         v.count = e.count;
         v.ingredients = e.ingredients;
         v.info = e.info;
+        UserApp.instance.changeInCart(this.#editingEntry,e);
         this.forceUpdate();
-        console.log(e)
         return this.#editingEntry = false;
     }
     render(){
-        const cart = UserApp.instance.cart;
+        const cart = UserApp.instance.tableSession.cart;
 
         return (
             <div className="content cart-page">
@@ -124,7 +125,7 @@ export default class CartPage extends React.Component{
                 <CartEditWindowClass/>
                 <div className="cart-grid">
                     <div className="order-title" style={{borderBottom: "1px solid black"}}>Καλάθι</div>
-                    <OrderList/>
+                    <OrderList cart={cart} menu={UserApp.instance.menu}/>
                     
                     <OrderPreview cart={cart} cartMode/>
                     <IngredientSelector buttonText="Αποθήκευση" onSubmit={e=>this.editFinished(e)}/>

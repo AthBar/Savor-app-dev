@@ -61,7 +61,7 @@ export class OrderHistory extends React.Component{
     }
     CreateOrder(data,key){
         return <div className="history-group" key={key}>
-                    <div className="history-text">Παραγγελία</div>{data.cart.map(
+                    <div className="history-text">Παραγγελία</div>{Object.values(data.cart).map(
                 (o,i)=> <div className="history-unit" key={i}>
                         <div className="history-joiner"/>
                         <div className="history-text">{this.state.menu[o.code].title}</div>

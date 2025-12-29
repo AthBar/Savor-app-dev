@@ -100,10 +100,24 @@ export default class UserApp extends React.Component{
         });
         Promise.all([UserApp.destinationPromise,UserApp.menuPromise]).then(([destination])=>{
             this.wsh = new TableClientClientHandler(destination.place,destination.table);
+            this.wsh.on("handshake-finished",()=>this.#sync(),true);
             this.wsh.on("message",m=>this.#onWshMessage(m));
-        })
+        });
 
         UserApp.instance = this;
+    }
+    addToCart(entry){
+        this.wsh.send({type:"add-to-cart",entry})
+    }
+    changeInCart(key,newEntry){
+        this.wsh.send({type:"change-in-cart",key,newEntry})
+    }
+    removeFromCart(key){console.log("removing")
+        this.wsh.send({type:"remove-from-cart",key})
+    }
+    #sync(){
+        this.tableSession.sync(this.wsh.syncData);
+        this.forceUpdate();
     }
     #onpopupclose=()=>{};
     popup(popup,cantClose,onClose){
@@ -152,21 +166,21 @@ export default class UserApp extends React.Component{
         if(!o)return false;
         return !o.rejected&&!o.delivered;
     }
-    addToCart(i){
-        this.#cart.push(i);
+    // addToCart(i){
+    //     this.#cart.push(i);
 
-        return this.setState({
-            cart:this.#cart
-        });
-    }
-    removeFromCart(i){
-        let index = this.#cart.indexOf(i);
-        if(index!=-1)this.#cart.splice(index,1);
+    //     return this.setState({
+    //         cart:this.#cart
+    //     });
+    // }
+    // removeFromCart(i){
+    //     let index = this.#cart.indexOf(i);
+    //     if(index!=-1)this.#cart.splice(index,1);
 
-        return this.setState({
-            cart:this.#cart
-        })
-    }
+    //     return this.setState({
+    //         cart:this.#cart
+    //     })
+    // }
     emptyCart(){
         this.#cart.splice(0,this.#cart.length);
 
@@ -199,25 +213,7 @@ export default class UserApp extends React.Component{
         return this.tableSession.balance;
     }
     sendOrder(){
-        const cart = [];
-        const lengthWithoutEmptyValues = arr=>arr.reduce((v,i)=>(i!==undefined&&i!==null&&i!=="")?v+1:v,0);
-        for(let i of this.#cart){
-            let o = {code:i.code,count:i.count};
-
-            //If i exists and it has at least one value that is not null or undefined then add it to the message
-            if(i.info&&lengthWithoutEmptyValues(Object.values(i.info))>0)o.info=i.info;
-
-            //Check if the message is improper in which case it shouldn't be sent
-            if(!i.count)continue;
-            if(!Array.isArray(i.ingredients))continue;
-
-            o.count = i.count;
-            o.ingredients = i.ingredients;
-            
-            cart.push(o);
-        }
-        this.wsh.send({type:"create-order",cart});
-        this.emptyCart();
+        this.wsh.send({type:"send-order"});
     }
     setState(state,...o){
         this.#globals.made = false;
@@ -225,10 +221,19 @@ export default class UserApp extends React.Component{
     }
     #onWshMessage(msg){
         switch(msg.type){
-            case "create-order":
+            case "cart-removal":
+                this.tableSession.removeFromCart(msg.key);
+                break;
+            case "cart-addition":
+                this.tableSession.addToCart(msg.key,msg.entry);
+                break;
+            case "cart-change":
+                this.tableSession.changeInCart(msg.key,msg.newEntry);
+                break;
+            case "order-sent":
+                location.replace("/store");
                 UserApp.instance.canOrder = false;
-                const total = msg.cart.reduce((v,c)=>v+this.calculatePrice(c),0);
-                this.tableSession.createOrder(msg,total);
+                this.tableSession.sendOrder();
                 break;
             case "order-accepted":
                 this.tableSession.acceptOrder();

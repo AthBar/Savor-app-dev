@@ -11,19 +11,21 @@ class MenuItem extends React.Component{
 
         const sub = props.self.ingredients.map(p=>p.title).join(", ");
         if(props.self.info)props.self.info = {...props.self.info}
+
+        const subtitle = props.self.description.length>3?props.self.description:sub;
         this.state = {
             item:props.self,
             title:props.self.title,
-            subtitle:(sub[0]||"").toUpperCase()+sub.slice(1),
+            subtitle:(subtitle[0]||"").toUpperCase()+subtitle.slice(1),
             price:currency(props.self.price)
         }
     }
-    #addButtonClick(){
+    #select(){
         IngredientSelector.instance.open({code:this.state.item.code});
     }
     render(){
         return (
-            <div className="menu-item" onClick={()=>this.#addButtonClick()}>
+            <div className="menu-item" onClick={()=>this.#select()}>
                 <div className="item-title">
                     <div>{this.state.title}</div>
                     <div>

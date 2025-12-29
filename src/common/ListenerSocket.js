@@ -23,20 +23,4 @@ export class ListenerClientHandler extends WebsocketHandler{
     doHandshake(){
         return 
     }
-    parseSyncData(data){
-        for(let table of Object.keys(data)){
-            const state = data[table];
-
-            for(let c=0;c<state.connections;c++)this.do("message",{type:"connected",table});
-
-            for(let m of state.orders){
-                this.do("message",{type:"create-order",cart:m.cart,table,timestamp:m.timestamp});
-
-                if(m.accepted)this.do("message",{type:"order-accepted",table});
-                if(m.rejected)this.do("message",{type:"order-rejected",table});
-                if(m.delivered)this.do("message",{type:"order-delivered",table});
-            }
-        }
-
-    }
 }

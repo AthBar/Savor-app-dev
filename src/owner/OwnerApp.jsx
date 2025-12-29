@@ -12,6 +12,7 @@ import React, { useState } from "react";
 import OwnerApp3 from "./App3";
 import LayoutEditor from "./LayoutEditor";
 import MobileApp from "./MobileApp";
+import MobileWaiterApp from "./MobileWaiterApp";
 
 const PLACE_REGEX = /^[A-Za-z0-9_-]{36}$/g;
 function OwnerRouter(){
@@ -31,20 +32,30 @@ class DashboardRouter extends React.Component{
             <Route path="" element={<PlaceSelection/>}/>
             <Route path=":id/edit-layout" element={<this._LayoutEditor/>}/>
             <Route path="watch/:id/*" element={<this._Watch/>}/>
+            <Route path="waiter/:id/*" element={<this._Waiter/>}/>
             <Route path=":id/*" element={<this._Dashboard/>}/>
         </Routes>
     }
+    _Waiter(){
+        const {id} = useParams();
+        const [_,redraw] = useState(0);
+        const match = window.matchMedia('(pointer: coarse)');
+        const shouldShowMobileApp = match.matches;
+        match.addEventListener("change",()=>redraw(_+1));
+
+        return shouldShowMobileApp?<MobileWaiterApp placeId={id}/>:<div>Πρέπει να βρίσκεστε σε συσκευή με οθόνη αφής</div>;
+    }
     _LayoutEditor(){
         const {id} = useParams();
-        return <LayoutEditor/>
+        return <LayoutEditor placeId={id}/>
     }
     _Dashboard(){
         const {id} = useParams();
         return <Dashboard placeId={id}/>
     }
     _Watch(){
-        const [_,redraw] = useState(0);
         const {id} = useParams();
+        const [_,redraw] = useState(0);
         const match = window.matchMedia('(pointer: fine)');
         const shouldShowPCApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
@@ -53,9 +64,6 @@ class DashboardRouter extends React.Component{
         return shouldShowPCApp?<OwnerApp3 placeId={id}/>:<MobileApp placeId={id}/>;
     }
 }
-
-                // <Route path="watch/*" element={<OwnerRouter/>}/>
-                // <Route path="layout" element={<LayoutDesigner/>}/>
 
 export default class OwnerApp extends EventComponent{
     /**

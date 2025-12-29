@@ -463,7 +463,7 @@ main.content-wrapper{
     grid-template-rows: auto 1fr auto;
     overflow: auto;
 }
-.order-send-button, .auto-detect-button, .green-wide-button, .dish-editor-complete-button, .ingredient-delete-button{
+.order-send-button, .auto-detect-button, .green-wide-button, .dish-editor-complete-button, .delete-button{
     width: 100%;
     
     border:none;
@@ -474,7 +474,7 @@ main.content-wrapper{
 .order-send-button, .green-wide-button, .dish-editor-complete-button{
     background-color: hsl(145, 50%, 50%);
 }
-.ingredient-delete-button{
+.delete-button{
     background-color: hsl(0, 50%, 50%);
 }
 .auto-detect-button{

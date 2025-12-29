@@ -15,7 +15,7 @@ class Order extends Unit{
     delivered=false;
     session;
     time;
-    constructor(tableSession,cart,comments,timestamp){
+    constructor(tableSession,cart,comments,timestamp=Date.now()){
         super("order");
         this.cart=cart;
         this.comments=comments;
@@ -71,6 +71,7 @@ export class TableSession extends MyEventTarget{
      * @type {Array<Order>}
      */
     orders=[];
+    cart={};
     requests=[];
     #active=true;
     total=0;
@@ -81,23 +82,43 @@ export class TableSession extends MyEventTarget{
         this.place=place;
         this.table=table;
     }
-    request(){
+    sync(syncData){
+        const orders = [];
+        for(let i of syncData.orders){
+            const order = new Order(this,i.cart,null,i.timestamp);
 
+            if(i.accepted)order.accept();
+            if(i.delivered)order.deliver();
+            if(i.rejected)order.reject();
+
+            order.on("change",()=>this.do("change"));
+            orders.push(order);
+        }
+        this.orders = orders;
+        this.cart = syncData.cart;
+        this.connects = syncData.connections;
+        this.paid = syncData.paid;
+
+        this.do("change");
     }
-    requestAccepted(){
-
-    }
-    //Once again, this is unsafe, but I assume the server will not send data that will cause this to happen
-    createOrder(msg,totalPrice){
-        const order = new Order(this, msg.cart, msg.comments||"",msg.timestamp||performance.now());
-        order.on("change",(...args)=>this.do("change",...args));
-
-        if(msg.accepted)order.accept();
-        if(msg.rejected)order.reject();
-        if(msg.delivered)order.deliver();
-
+    sendOrder(){
+        const order = new Order(this,this.cart,null);
         this.orders.push(order);
-        this.total += totalPrice;
+        console.log(order);
+        this.cart = {};
+        this.do("change");
+        return order;
+    }
+    changeInCart(key,newEntry){
+        this.cart[key] = newEntry;
+        this.do("change");
+    }
+    removeFromCart(key){
+        delete this.cart[key];
+        this.do("change");
+    }
+    addToCart(key,entry){console.log("add to cart")
+        this.cart[key] = entry;
         this.do("change");
     }
     acceptOrder(){
@@ -121,7 +142,10 @@ export class TableSession extends MyEventTarget{
     }
     get activeOrder(){
         const candidate = this.orders.at(-1);
-        return candidate.delivered?null:candidate;
+        return candidate?.delivered?null:candidate;
+    }
+    get canOrder(){
+        return !this.activeOrder;
     }
     connected(){
         this.connects++;
@@ -191,9 +215,12 @@ export class PlaceSession extends MyEventTarget{
         }
         this.do("change");
     }
+    /**
+     * @returns {TableSession}
+     */
     getLatestTableSession(table){
         const list = this.tables[table];
-        if(list)return list[list.length-1];
+        if(list)return list.at(-1);
         else return this.#session(table); //Set list and return first element
     }
     /**

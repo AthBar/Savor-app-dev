@@ -43,17 +43,7 @@ class TablePage extends React.Component{
     render(){
         return [
             <TableSessionManager table={this.table} key="sess"/>,
-            <button style={{
-                position:"fixed",
-                left:"25px",
-                bottom:"25px",
-                borderRadius:"100vw",
-                boxShadow:"4px 4px 16px 0 rgba(0, 0, 0, .5)",
-                width:"40px",
-                height:"40px",
-                border:"1px solid",
-                fontSize:"1.5em"
-            }} onClick={()=>MobileApp.instance.navToStartingPage()} key="nav">&lt;</button>
+            <button className="mobile-app-back-button" onClick={()=>MobileApp.instance.navToStartingPage()} key="nav">&lt;</button>
         ]
     }
 }

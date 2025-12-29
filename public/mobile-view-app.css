@@ -9,3 +9,14 @@
     background-color: white;
     padding: 15px;
 }
+.mobile-app-back-button{
+    position:fixed;
+    left:25px;
+    bottom:25px;
+    border-radius:25px;
+    box-shadow:4px 4px 16px 0 rgba(0, 0, 0, .5);
+    width:75px;
+    height:75px;
+    border:1px solid;
+    font-size:1.5em;
+}

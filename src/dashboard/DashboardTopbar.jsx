@@ -9,7 +9,9 @@ export default function(){
         <div style={{textAlign:"left",paddingLeft:"50px",display:"flex",justifyContent:"space-around",alignItems:"center"}}>
             Θανάσης Μπαρτζώκας <span style={{color:"#a00"}}>(admin)</span>
             <div>
-                {document.fullscreenElement?<button onClick={()=>document.exitFullscreen()}>Έξοδος από πλήρη οθόνη</button>:null}
+                {document.fullscreenElement?
+                <button onClick={()=>document.exitFullscreen()}>Έξοδος από πλήρη οθόνη</button>:
+                <button onClick={()=>document.querySelector("#root")?.requestFullscreen()}>Είσοδος σε πλήρη οθόνη</button>}
             </div>
         </div>
     </div>;

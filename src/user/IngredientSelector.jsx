@@ -32,21 +32,21 @@ export default class IngredientSelector extends React.Component{
         this.state.selections[ingredient] = !this.state.selections[ingredient];
         this.forceUpdate();
     }
-    open(entryToEdit){
-        const dishToEdit = UserApp.instance.menu[entryToEdit.code];
+    open(entry){
+        const dishToEdit = UserApp.instance.menu[entry.code];
         const selections = {};
-
-        for(let i of dishToEdit.ingredients)selections[i.title] = entryToEdit.ingredients?entryToEdit.ingredients.includes(i.title):!!i.defaultOn;
+        
+        for(let i of dishToEdit.ingredients)selections[i.title] = entry.ingredients?entry.ingredients.includes(i.title):!!i.defaultOn;
 
         const d = {
             dish:dishToEdit,
             selections,
             visible:true,
-            count:entryToEdit.count||1,
+            count:entry.count||1,
             image:dishToEdit.has_image?`/${(UserApp.instance?.place||window.place).id}/${dishToEdit.code}/thumbnail.webp`
             :`/default-dish/thumbnail.webp`
         };
-        if(entryToEdit.info)d.comments=entryToEdit.info.comments;
+        if(entry.info)d.comments=entry.info.comments;
         
         this.setState(d);
     }

@@ -72,6 +72,7 @@ export class WebsocketHandler extends MyEventTarget{
                     data = JSON.parse(e.data);
                 }catch(err){return j("Unexpected: Sync data couldn't be parsed: " + JSON.stringify(e.data))}
 
+                this.syncData = data;
                 this.parseSyncData(data);
                 
                 this.websocket.removeEventListener("message",syncF);
@@ -102,17 +103,7 @@ export class WebsocketHandler extends MyEventTarget{
         this.websocket.addEventListener("message",startF);
     }
     parseSyncData(data){
-        for(let i of Object.keys(data)){
-            //Parses connections
-            for(let c=0;c<data[i].connections;c++)this.do("message",{type:"connected",table:i});
-            
-            //Parses orders
-            for(let m of data[i].orders){
-                m.table = i;
-                m.type = "create-order";
-                this.do("message",m);
-            }
-        }
+        console.log("Syncing with data: ",data);
     }
     #reconnectPromise;
     /**
