@@ -1,0 +1,8 @@
+<svg viewBox="0 -1.7 4.75 2" xmlns="http://www.w3.org/2000/svg">
+  <text x="0" y="0" font-family="serif" font-size="2">Savor</text>
+  
+  <g transform="translate(3.75,-1.5) scale(0.4)">
+    <path d="M0,0 L0,0.7M0.3,0 L0.3,1.2M0.6,0 L0.6,0.7M0,0.7 L0.6,0.7
+" stroke="black" stroke-width="0.2" stroke-linecap="round" transform="rotate(30)"/>
+  </g>
+</svg>

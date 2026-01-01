@@ -1,13 +1,19 @@
 import { Route, Routes, useNavigate, useParams } from "react-router";
 import ListenerApp from "./ListenerAppBase";
 import { useEffect, useState } from "react";
+import { API, currency } from "../common/functions";
 
 function MenuDishOptions({dish,category,table,onSubmit,...props}){
     const nav = useNavigate();
     const [_,redraw] = useState(0);
-    const [count,setCount] = useState(props.count||1);
     const [ingredients] = useState(props.ingredients||{});
+    const [count,setCount] = useState(props.count||1);
     const menu = MobileWaiterApp.instance.menu;
+
+    useEffect(()=>{
+        for(let i of menu?.[dish]?.ingredients||[])
+            if(i.defaultOn)ingredients[i.title]=true;
+    },[]);
 
     if(!menu)return <div>Loading</div>;
     else dish = menu[dish];
@@ -15,11 +21,10 @@ function MenuDishOptions({dish,category,table,onSubmit,...props}){
     if(!props.url&&dish.category!==category)
         return nav(`${MobileWaiterApp.instance.startingPageURL}/${table}/order/${dish.category}/${dish.code}`);
 
-    console.log(ingredients);
-    function toggleIngredient(title){console.log(title)
+    function toggleIngredient(title){
         if(ingredients[title])delete ingredients[title];
         else ingredients[title] = true;
-        console.log(ingredients[title])
+
         redraw(_+1);
     }
 
@@ -49,7 +54,7 @@ function MenuDishOptions({dish,category,table,onSubmit,...props}){
                         {map.length>0?map:<div style={{textAlign:"center"}}>Δεν υπάρχουν αφαιρέσιμα υλικά</div>}
                     </div>
                 </div>
-                <div className=" waiter-dishopts-add-to-cart">
+                <div className="waiter-fixed-bottom">
                     <div className="waiter-dishopts-count">
                         <button onClick={()=>setCount(Math.max(count-1,1))}>-</button>
                         <div>{count}</div>
@@ -66,7 +71,10 @@ function MenuDishOptions({dish,category,table,onSubmit,...props}){
 function MenuDishSelector({table,category}){
     const dishes=[];const nav = useNavigate();
     if(!MobileWaiterApp.instance.menuByCategory)return <div>Φόρτωση καταλόγου</div>;
-    return  <div style={{padding:"15px"}}>
+    return  <div style={{padding:"70px 15px"}}>
+                <div className="waiter-fixed-title">
+                    {category}
+                </div>
                 <div className="waiter-x-selector">
                     {MobileWaiterApp.instance.menuByCategory[category].map(dish=>
                         <button key={dish.code} className="waiter-order-option-button" onClick={()=>nav(dish.code)}>{dish.title}</button>
@@ -79,7 +87,10 @@ function MenuDishSelector({table,category}){
 function MenuCategorySelector({table,category}){
     if(!MobileWaiterApp.instance.menu)return <div>Φόρτωση καταλόγου</div>;
     const nav = useNavigate();
-    return  <div style={{padding:"15px"}}>
+    return  <div style={{padding:"70px 15px"}}>
+                <div className="waiter-fixed-title">
+                    Κατηγορίες
+                </div>
                 <div className="waiter-x-selector">
                     {MobileWaiterApp.instance.menuCategories.map(cat=>
                             <button key={cat} className="waiter-order-option-button" onClick={()=>nav(cat)}>{cat}</button>
@@ -90,26 +101,59 @@ function MenuCategorySelector({table,category}){
 }
 
 function TableOptionsPage({table}){
+    const [_,redraw] = useState(0);
     const nav = useNavigate();
-    const canOrder = MobileWaiterApp.instance.placeSession.getLatestTableSession(table)?.canOrder;
-    return <div className="waiter-table-options">
-        <div>
-            <button className={canOrder?"green-wide-button":"auto-detect-button"} onClick={canOrder?()=>nav("order"):null}>
-                Προσθήκη
-            </button>
-        </div>
-        <div>
-            <button className="green-wide-button" onClick={()=>nav("cart")}>
-                Καλάθι
-            </button>
-        </div>
-        <div>
-            <button className="green-wide-button" onClick={()=>nav("pay")}>
-                Εξόφληση λογαριασμού
-            </button>
-        </div>
-        <BackButton url={`${MobileWaiterApp.instance.startingPageURL}/layout`}/>
-    </div>
+
+    const sess = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
+    const canOrder = sess?.canOrder;
+
+    useEffect(()=>sess.on("change",()=>redraw(_+1),true));
+
+    function Normal(){
+        return [<div key="order">
+                    <button className="waiter-order-option-button" onClick={canOrder?()=>nav("order"):null}>
+                        Προσθήκη
+                    </button>
+                </div>,
+                <div key="cart">
+                    <button className="waiter-order-option-button" onClick={()=>nav("cart")}>
+                        Καλάθι
+                    </button>
+                </div>,
+                <div key="bill">
+                    <button className="waiter-order-option-button" onClick={()=>nav("pay")}>
+                        Εξόφληση λογαριασμού
+                    </button>
+                </div>
+            ];
+    }
+    function CantOrder(){
+        const nav = useNavigate();
+        function cancel(){
+            MobileWaiterApp.instance.cancelOrder(table);
+        }
+
+        return [<div key="order">
+                    <button className="waiter-order-option-button" onClick={canOrder?()=>nav("order"):null}>
+                        Παρακολούθηση παραγγελίας
+                    </button>
+                </div>,
+                <div key="cart">
+                    <button className="waiter-order-option-button" onClick={()=>nav("cart")}>
+                        Καλάθι
+                    </button>
+                </div>,
+                <div key="bill">
+                    <button className="waiter-order-option-button" onClick={()=>nav("pay")}>
+                        Εξόφληση λογαριασμού
+                    </button>
+                </div>
+            ];
+    }
+    return <div className="waiter-x-selector" style={{padding:"15px"}}>
+                {canOrder?<Normal/>:<CantOrder/>}
+                <BackButton url={`${MobileWaiterApp.instance.startingPageURL}/layout`}/>
+            </div>
 }
 
 function BackButton({url}){
@@ -126,25 +170,68 @@ function Overview(){
             gridTemplateColumns:"1fr 1fr"
         }}>
             <div style={{padding:"18px"}}>
-                <button style={{width:"100%",height:"100%"}} className="green-wide-button" onClick={()=>nav("layout")}></button>
+                <button style={{width:"100%",height:"100%"}} className="green-wide-button" onClick={()=>nav("layout")}>Έναρξη</button>
             </div>
             <div style={{padding:"18px"}}>
-                <button style={{width:"100%",height:"100%"}} className="delete-button" onClick={()=>nav("self")}></button>
+                <button style={{width:"100%",height:"100%"}} className="delete-button" onClick={()=>nav("self")}>Πληροφορίες</button>
             </div>
         </div>
 }
+function TimeSince({startDate}){
+    const [_,redraw] = useState(0);
+    useEffect(()=>{console.log("render")
+        const id = setTimeout(()=>redraw(_+1),1000);
+        return ()=>clearTimeout(id);
+    });
+    const now = Date.now();
+    const diff = now - startDate;
+    
+    const seconds = Math.floor(diff/1000);
+    const minutes = Math.floor(seconds/60);
+    const hours = Math.floor(minutes/60);
 
-function SelfPage(){
+    const hstr = hours?hours.toString().padStart(2,"0")+":":"";
+    const mstr = minutes>0?(minutes%60).toString().padStart(2,"0")+":":"";
+    const sstr = (seconds%60).toString().padStart(2,"0");
+    console.log([hstr,mstr,sstr])
+    return hstr+mstr+sstr;
+}
+
+function ProfilePage(){
+    const [_,redraw] = useState(0);
+
+    const app = MobileWaiterApp.instance;
+    useEffect(()=>(MobileWaiterApp.placePromise.then(()=>{
+        redraw(_+1);
+        MobileWaiterApp.instance.placeSession.on("change",()=>redraw(_+1))
+    }),undefined),[]);
+
+    const data = localStorage.getItem("clocked-in");
+    const waiter = app.placeSession.waiters[data?JSON.parse(data).id:-1]||{};
+    const clockInTime = data?JSON.parse(data).clockInTime:null;
+
+    function unixToTimeString(unix){
+        const date = new Date(unix);
+        const hours = date.getHours().toString().padStart(2,"0");
+        const minutes = date.getMinutes().toString().padStart(2,"0");
+        return `${hours}:${minutes}`;
+    }
+
+    
+
     return <div>
-        <h2>Προφιλ: Θανάσης Μπαρτζώκας</h2>
-        <div>
-
+        <h2 style={{textAlign:"center"}}>Μέλος προσωπικού: {waiter.title}</h2>
+        <div style={{padding:"10px"}}>
+            <div>Επιχείρηση: {app.place.title}</div>
+            <div>Ώρα σύνδεσης: {clockInTime?unixToTimeString(clockInTime):"Μή διαθέσιμη"}</div>
+            <div>Ρόλος: Εξυπηρέτηση πελατών</div>
+            <div>Συνδεδεμένος για: <TimeSince startDate={clockInTime}/></div>
         </div>
-        <BackButton url={MobileWaiterApp.instance.startingPageURL}/>
+        <BackButton url={app.startingPageURL}/>
     </div>
 }
 
-function LayoutPage({layout}){
+function LayoutPage({layout}){console.log(MobileWaiterApp.instance.startingPageURL)
     MobileWaiterApp.instance.nav = useNavigate();
     return <div style={{padding:"16px"}}>
         {layout}
@@ -182,13 +269,44 @@ function CartPage({table}){
                 </div>
                 <BackButton url={MobileWaiterApp.instance.startingPageURL+"/"+table}/>
             </div>,
-            map.length>0?<button key="send" className="waiter-br-button" onClick={sendOrder}/>:null
+            map.length>0?<button key="send" className="waiter-br-button send" onClick={sendOrder}/>:null
         ]
 }
 
 function PaymentPage({table}){
+    if(!MobileWaiterApp.instance.menu)return <div>Φόρτωση...</div>;
+    const tableSession = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
+    let orders = tableSession.orders||[];console.log(orders);
+    let total = 0;
+    const mainPart = orders.length<=0?<div className="content-centered" style={{width:"100%"}}>Καμία παραγγελία</div>:
+    orders.map((o,i)=>
+        <div key={i} className="waiter-summary-order">
+            <h3 style={{textAlign:"center"}}>Παραγγελία:</h3>
+            <hr/>
+            {Object.values(o.cart).map((entry,j)=>{
+                const dish = MobileWaiterApp.instance.menu[entry.code];
+                const price = MobileWaiterApp.instance.calculatePrice(entry);
+                total += price;
+                return <div key={j}>
+                    {entry.count}x {dish.title} - {currency(price)}
+                </div>
+            })}
+        </div>
+    )
+
     return <div>
-        <div>Λογαριασμός για {table}</div>
+        <div className="waiter-fixed-title">Λογαριασμός για {table}</div>
+        <div className="waiter-summary-wrapper">
+            <div className="waiter-summary-main">
+                {mainPart}
+            </div>
+        </div>
+        <div className="waiter-fixed-bottom">
+            <div style={{padding:"10px",fontSize:"1.5em"}}>Σύνολο: {currency(total)}</div>
+        </div>
+        {total>0?
+            <button className="waiter-br-button confirm" onClick={()=>MobileWaiterApp.instance.onPaid(table)}/>
+        :null}
         <BackButton url={MobileWaiterApp.instance.startingPageURL+"/"+table}/>
     </div>
 }
@@ -206,23 +324,27 @@ function CartEditPage({entryToEdit,table}){
     const dish = MobileWaiterApp.instance.menu[entry.code]
     if(!dish)return fail();
 
+    function onClick(){
+        return MobileWaiterApp.instance.removeFromCart(table,entryToEdit)
+    }
 
     const ingredientObj = {};
     for(let i of entry.ingredients)ingredientObj[i]=true;
-    return <MenuDishOptions
+    return [<MenuDishOptions key="main"
                 table={table}
                 dish={dish.code}
                 onSubmit={r=>MobileWaiterApp.instance.changeCartEntry(table,entryToEdit,r)}
                 ingredients={ingredientObj}
                 count={entry.count}
                 url={`${MobileWaiterApp.instance.startingPageURL}/${table}/cart/`}
-            />;
+            />,<button key="send" className="waiter-br-button delete" onClick={onClick}/>];
 }
+
+
 
 export default class MobileWaiterApp extends ListenerApp{
     nav;
     carts={};
-    placeId;
     startingPageURL;
     /**
      * @type {MobileWaiterApp}
@@ -230,16 +352,28 @@ export default class MobileWaiterApp extends ListenerApp{
     static instance;
     constructor(props){
         super(props);
-        this.placeId = props.placeId;
         this.startingPageURL = `/dashboard/waiter/${this.placeId}`;
         MobileWaiterApp.instance = this;
-        //ListenerApp.menuPromise.then(()=>this.forceUpdate());
+    }
+    onPaid(table){
+        this.wsh.send({type:"pay",table});
+        // const sess = this.placeSession.getLatestTableSession(table);
+        // if(!sess)return;
+
+        // for(let i of sess.orders)i.pay();
     }
     changeCartEntry(table,key,newEntry){
         this.wsh.send({type:"change-in-cart",table,key,newEntry});
     }
     addToCart(table,entry){
         this.wsh.send({type:"add-to-cart",table,entry});
+    }
+    removeFromCart(table,key){
+        this.wsh.send({type:"remove-from-cart",table,key});
+    }
+    cancelOrder(table){
+        this.wsh.send({type:"cancel-order",table});
+        this.forceUpdate();
     }
     sendOrder(table){
         this.wsh.send({type:"send-order",table});
@@ -280,6 +414,9 @@ export default class MobileWaiterApp extends ListenerApp{
         const nav = useNavigate();
         useEffect(()=>nav(url),[]);
     }
+    _Starting(){
+        return <Overview/>;
+    }
     _TablePage(){
         const {table} = useParams();
         return <Routes>
@@ -295,9 +432,9 @@ export default class MobileWaiterApp extends ListenerApp{
     render(){
         return <Routes>
             <Route path="layout" element={<LayoutPage layout={this.layoutSVG}/>}/>
-            <Route path="self" element={<SelfPage/>}/>
+            <Route path="self" element={<ProfilePage/>}/>
             <Route path=":table/*" element={<this._TablePage/>}/>
-            <Route path="" element={<Overview/>}/>
+            <Route path="" element={<this._Starting/>}/>
         </Routes>
     }
 }

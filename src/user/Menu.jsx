@@ -24,12 +24,15 @@ class MenuItem extends React.Component{
         IngredientSelector.instance.open({code:this.state.item.code});
     }
     render(){
+        const canOrder = !UserApp.instance.hasActiveOrder;
         return (
-            <div className="menu-item" onClick={()=>this.#select()}>
+            <div className="menu-item" onClick={()=>canOrder?this.#select():null}>
                 <div className="item-title">
                     <div>{this.state.title}</div>
                     <div>
-                        <button className="add">+</button>
+                        {canOrder?
+                            <button className="add">+</button>
+                        :null}
                     </div>
                 </div>
                 <hr/>

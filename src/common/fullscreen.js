@@ -2,7 +2,7 @@ class FullscreenService{
     constructor(){
 
     }
-    static onclick(e){console.log(e)
+    static onclick(e){
         document.querySelector("#root").requestFullscreen();
     }
 }

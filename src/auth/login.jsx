@@ -8,7 +8,7 @@ export default class LoginPage extends React.Component{
         LoginPage.login(this.#a.current.value,this.#b.current.value);
     }
     logout(){
-        return API("/auth/logout")
+        return API("/auth/logout","POST")
     }
     render(){
         return <div className="auth-form">

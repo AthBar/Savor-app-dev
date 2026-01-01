@@ -9,6 +9,7 @@ import TableClientClientHandler from '../common/TableClientSocket.js';
 import React from 'react';
 import { TableSession } from "../common/VirtualSessions.js";
 import { API } from "../common/functions.js";
+import { EventComponent } from "../common/Event.js";
 
 function Router(){//Empty string is root, * is unmatched
     return <Routes>
@@ -23,7 +24,14 @@ function Router(){//Empty string is root, * is unmatched
 }
 
 function Disabled(){
-    return <p>Αυτή η εφαρμογή προορίζεται για κινητά τηλέφωνα</p>
+    return <div style={{
+        display:"flex",
+        justifyContent:"center",
+        flexDirection:"column",
+        height:"100%",
+        textAlign:"center",
+        fontSize:"2em",
+    }}>Αυτή η εφαρμογή προορίζεται για κινητά τηλέφωνα σε κάθετο προσανατολισμό (πορτρέτο)</div>
 }
 
 function PlaceClosedPopup({placeName}){
@@ -37,7 +45,7 @@ function PlaceClosedPopup({placeName}){
     </div>
 }
 
-export default class UserApp extends React.Component{
+export default class UserApp extends EventComponent{
     /**
      * @type {UserApp}
      */
@@ -60,10 +68,11 @@ export default class UserApp extends React.Component{
     #cart=[];
     #globals={made:false};
     menu;
+    sess_changes=0;
     constructor(props){
         super(props);
 
-        const media = matchMedia("screen and (orientation: portrait) and (min-width:300px)");
+        const media = matchMedia("screen and (orientation: portrait) and (min-width:300px) and (pointer:coarse)");
         this.state={
             dimensionsRight: media.matches,
             menu:null,
@@ -82,13 +91,12 @@ export default class UserApp extends React.Component{
         UserApp.destinationPromise.then(destination=>{
             if(!destination.success)return location.replace("/");
 
-            UserApp.instance.place = window.place = {id:destination.place};
+            this.place = window.place = {id:destination.place};
             UserApp.menuPromise = API(`/place/menu/${destination.place}`).then(r=>r.data)
             this.setState({destination});
 
             this.tableSession = new TableSession(destination.place,destination.table);
         });
-
         UserApp.menuPromise.then(menuData=>{
             const menu = {};
             for(let i of menuData)menu[i.code]=i;
@@ -98,13 +106,37 @@ export default class UserApp extends React.Component{
             this.setState({placeData});
             UserApp.instance.place.name = placeData.name;
         });
-        Promise.all([UserApp.destinationPromise,UserApp.menuPromise]).then(([destination])=>{
+
+        Promise.all([UserApp.destinationPromise, UserApp.menuPromise]).then(([destination])=>{
             this.wsh = new TableClientClientHandler(destination.place,destination.table);
-            this.wsh.on("handshake-finished",()=>this.#sync(),true);
+            this.wsh.on("handshake-rejected",e=>this.#handleRejection(e));
+            this.wsh.on("handshake-finished",()=>this.#sync());
             this.wsh.on("message",m=>this.#onWshMessage(m));
         });
 
         UserApp.instance = this;
+    }
+    #handleRejection(e){
+        let json,str;
+        try{
+            json = JSON.parse(e.reason);
+            str = ["The websocket system has closed. Reason:\n"];
+
+            switch(json.code){
+                case "not-open":
+                    str.push("- The place is not open");
+                    break;
+                default:
+                    delete json.code;
+                    str.push("- The reason is unrecognizable. JSON:\n", json);
+                    break;
+            }
+        }
+        catch(e){
+            str = ["Reason for WebSocket closure is unknown (not in JSON): ", e.reason];
+        }
+
+        console.warn(...str);
     }
     addToCart(entry){
         this.wsh.send({type:"add-to-cart",entry})
@@ -116,7 +148,13 @@ export default class UserApp extends React.Component{
         this.wsh.send({type:"remove-from-cart",key})
     }
     #sync(){
-        this.tableSession.sync(this.wsh.syncData);
+        const dest = this.state.destination;
+        const prev = this.tableSession;
+
+        this.tableSession = TableSession.import(dest.place.id,dest.table,this.wsh.syncData);
+        this.do("session-refresh",prev);
+        this.sess_changes++;
+
         this.forceUpdate();
     }
     #onpopupclose=()=>{};
@@ -132,6 +170,12 @@ export default class UserApp extends React.Component{
         //If popup is allowed to close, and the click event has a target, and the target is one of the dark elements
         if(this.state.popupCanClose&&e.target&&(e.target.classList.contains("popup-background")||e.target.classList.contains("popup-wrapper")))
             this.popup(false)
+    }
+    get total(){
+        return this.tableSession.orders.reduce((c,v)=>{
+            if(v.rejected||v.cancelled)return c;
+            else return c+Object.values(v.cart).reduce((c,v)=>c+this.calculatePrice(v),0);
+        },0)
     }
     set dimensionsRight(v){
         this.setState({
@@ -159,12 +203,7 @@ export default class UserApp extends React.Component{
     get menu(){return this.state.menu}
     get cart(){return this.#cart}
     get hasActiveOrder(){
-        const sess = this.tableSession.orders;
-        if(!sess)return false;
-
-        const o = sess.at(-1);
-        if(!o)return false;
-        return !o.rejected&&!o.delivered;
+        return !this.tableSession.canOrder
     }
     // addToCart(i){
     //     this.#cart.push(i);
@@ -235,6 +274,10 @@ export default class UserApp extends React.Component{
                 UserApp.instance.canOrder = false;
                 this.tableSession.sendOrder();
                 break;
+            case "order-cancelled":
+                UserApp.instance.canOrder = true;
+                this.tableSession.cancelOrder();
+                break;
             case "order-accepted":
                 this.tableSession.acceptOrder();
                 break;
@@ -270,7 +313,7 @@ export default class UserApp extends React.Component{
     render(){
         if(!this.state.destination)return "Loading...";
         return this.state.dimensionsRight?
-        [<Router key="main"/>,
+        [<Router key={this.sess_changes}/>,
             this.state.popup?
                     <div key="popup" className="popup-background" onMouseDown={e=>this.onClick(e)}>
                         <div className="popup-wrapper">

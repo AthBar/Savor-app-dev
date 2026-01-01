@@ -13,6 +13,7 @@ import OwnerApp3 from "./App3";
 import LayoutEditor from "./LayoutEditor";
 import MobileApp from "./MobileApp";
 import MobileWaiterApp from "./MobileWaiterApp";
+import ClockInPrompt from "./WaiterClockInPrompt";
 
 const PLACE_REGEX = /^[A-Za-z0-9_-]{36}$/g;
 function OwnerRouter(){
@@ -39,11 +40,14 @@ class DashboardRouter extends React.Component{
     _Waiter(){
         const {id} = useParams();
         const [_,redraw] = useState(0);
+
+        const toShow = localStorage.getItem("clocked-in")?<MobileWaiterApp placeId={id}/>:<ClockInPrompt placeId={id}/>;
         const match = window.matchMedia('(pointer: coarse)');
         const shouldShowMobileApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
 
-        return shouldShowMobileApp?<MobileWaiterApp placeId={id}/>:<div>Πρέπει να βρίσκεστε σε συσκευή με οθόνη αφής</div>;
+
+        return shouldShowMobileApp?toShow:<div>Πρέπει να βρίσκεστε σε συσκευή με οθόνη αφής</div>;
     }
     _LayoutEditor(){
         const {id} = useParams();
@@ -73,7 +77,6 @@ export default class OwnerApp extends EventComponent{
 
     #onclose=()=>{};
     wsh;
-    placeSession;
     sessions={};
     /**
      * @type {LayoutSVG}

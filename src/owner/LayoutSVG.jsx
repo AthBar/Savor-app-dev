@@ -38,7 +38,7 @@ function Area({rect,tag}){
 class Table extends EventComponent{
     #id;#onclick;#selected;#ref=createRef();#rectRef=createRef();
     constructor(props){
-        const {position,size,tag,id,blink,onclick} = props;
+        const {position,size,tag,id,blink,onclick,selected} = props;
         super(props);
 
         this.#id = id;
@@ -47,8 +47,11 @@ class Table extends EventComponent{
             position,
             size,
             tag,
-            blink
+            blink,
+            selected
         };
+        if(selected)console.log("selected",id)
+        this.#selected = selected;
     }
     get id(){return this.#id}
     set blink(v){
@@ -113,8 +116,10 @@ export default class LayoutSVG extends EventComponent{
         this.state = {
             placeId,
             layout:this.#layout,
-            viewOnly:!!props.viewOnly
+            viewOnly:!!props.viewOnly,
+            selectedTable:props.selectedTable
         }
+        this.#selectedTable = props.selectedTable;
         if(props.onLayoutParsed)this.on("layout-parsed",props.onLayoutParsed);
         //window.f = (...args)=>this.getTableBlinks(...args);
 
@@ -133,6 +138,7 @@ export default class LayoutSVG extends EventComponent{
                 if(!this.blinks[t])this.blinks[t] = {from:defaultColor,to:defaultColor};
             }
             this.state.layout = r;
+            this.state.selectedTable = props.selectedTable;
             this.do("layout-loaded");
 
             this.makeRects();
@@ -141,7 +147,7 @@ export default class LayoutSVG extends EventComponent{
     }
     static async fetchLayoutForPlace(placeId){
         if(this.layoutCache[placeId])return this.layoutCache[placeId];
-        else return API(`/place/layout/${placeId}`).then(r=>this.layoutCache[placeId]=r)
+        else return API(`/place/layout/${placeId}`).catch(e=>e).then(r=>this.layoutCache[placeId]=r)
     }
     get layout(){
         return this.#layout;
@@ -194,7 +200,7 @@ export default class LayoutSVG extends EventComponent{
             )
             key++;
         }
-        let tableSize = [80,60];
+        let tableSize = [95,80];
         for (let k of Object.keys(this.#layout.tables)){
             const i = this.#layout.tables[k];
             const tag = i.tag = "Table";
@@ -209,6 +215,7 @@ export default class LayoutSVG extends EventComponent{
                 id={i.id}
                 blink={this.blinks[k]}
                 ref={ref}
+                selected={this.state.selectedTable==i.id}
                 onclick={()=>this.selectedTable=k}
             />;
 
@@ -218,7 +225,7 @@ export default class LayoutSVG extends EventComponent{
         this.#blinksMade = false;
         return obj;
     }
-    render(){ 
+    render(){
         if(!this.#rectsMade)return <div style={
             {
                 height:"100%",
@@ -227,7 +234,8 @@ export default class LayoutSVG extends EventComponent{
                 flexDirection:"column",
                 placeContent:"center",
                 fontSize:"3em"
-            }}>Φόρτωση κάτοψης...</div>;
+            }}>Εμφάνιση κάτοψης...</div>;
+
         return <svg 
         viewBox="-650 -310 1185 530"
         style={{width:"100%",height:"100%"}}

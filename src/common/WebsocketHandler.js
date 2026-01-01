@@ -20,28 +20,46 @@ export class WebsocketHandler extends MyEventTarget{
         this.#protocols=protocols;
         this.websocket = new WebSocket(url,protocols);
         this.#setCloseEvents();
+        addEventListener("offline",()=>{
+            this.websocket.close(4000,"Client went offline");
+            addEventListener("online",()=>this.#reopenLoop(),{once:true})
+        });
     }
     #setCloseEvents(){
-        this.websocket.addEventListener("close",e=>{
+        this.websocket.addEventListener("close",e=>{console.log("closed")
+            if(e.code==1006){
+                console.log("WebSocket (live system) closed unexpectedly. Attempting to reconnect...", e);
+                this.#reopenLoop();
+            }
+            else if(e.code==4000){
+                console.log("WebSocket (live system) closed due to client going offline. Waiting for connection to reconnect...");
+            }
+            else if(!this.#ready){
+                this.do("handshake-rejected",e);
+            }
+            else{
+                console.log("what the hell")
+            }
             this.connected = false;
-            console.log("Websocket closed. Attempting to reconnect adding a 10% delay each time", e);
-            this.#reopenLoop();
-        })
+            this.#ready = false;
+        });
     }
     #reopens = 0;
     async #reopenLoop(){
+        console.log("Attempting to reconnect WebSocket (live system)...");
+
         return this.reopen()
         .then(e=>{
             this.#reopens = 0;
             this.#setCloseEvents();
             this._handshake();
-            console.log("Reopened");
-        })
-        .catch(e=>{
-            setTimeout(()=>this.#reopenLoop(),1000*(1.1)**this.#reopens);
+            console.log("WebSocket (live system) reconnected successfully");
+        },()=>{
+            const nextDelay = Math.min((2**this.#reopens),30);
+            console.log(`Couldn't connect to WebSocket server. Attempting a reconnect in ${nextDelay} seconds`);
+            setTimeout(()=>this.#reopenLoop(),nextDelay*1000);
             this.#reopens++
-        })
-
+        });
     }
     /**
      * Basic handshake, common for all clients. Responsible for synchronizing the client with any past events and waiting for
@@ -103,7 +121,7 @@ export class WebsocketHandler extends MyEventTarget{
         this.websocket.addEventListener("message",startF);
     }
     parseSyncData(data){
-        console.log("Syncing with data: ",data);
+        //console.log("Συγχρονισμός WebSocket με δεδομένα: ",data);
     }
     #reconnectPromise;
     /**
@@ -117,8 +135,8 @@ export class WebsocketHandler extends MyEventTarget{
         if(this.#reconnectPromise)return this.#reconnectPromise;
 
         try{
-        //Open the new WebSocket object
-        this.websocket = new WebSocket(this.#url,this.#protocols);
+            //Open the new WebSocket object
+            this.websocket = new WebSocket(this.#url,this.#protocols);
             
         }catch(e){console.log("Error making ws:",e)}
 
@@ -156,7 +174,7 @@ export class WebsocketHandler extends MyEventTarget{
                 });
             }
             catch(e){
-                return console.log("Websocket state change while trying to connect: ", e);
+                return console.log("Αλλαγή στην κατάσταση websocket κατά την διάρκεια αποστολής: ", e);
             }
         }
 

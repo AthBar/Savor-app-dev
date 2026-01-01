@@ -1,11 +1,11 @@
 import React, { createRef, useEffect, useState } from "react";
 import { ListenerClientHandler } from "../common/ListenerSocket";
-import { PlaceSession } from "../common/VirtualSessions";
+import { PlaceSession, Waiter } from "../common/VirtualSessions";
 import { EventComponent } from "../common/Event";
 import { API } from "../common/functions";
 import SynchronizedLayoutSVG from "./SynchronizedLayoutSVG";
 
-function OrderOverviewDish({dish}){console.log(dish)
+function OrderOverviewDish({dish}){
     return  <div className="order-overview-dish" style={{"--cc":Math.min(5,Math.ceil(dish.ingredients.length/5))}}>
                 <div className="title">{dish.count}x {dish.title}</div>
                 <hr/>
@@ -88,9 +88,11 @@ export function TableSessionManager({table}){
 export default class ListenerApp extends EventComponent{
     layoutSVG;
     placeId;
+    place;
     
     wsh;
     placeSession;
+    sess_changes = 0;
 
     menu;
     menuLoaded;
@@ -100,6 +102,9 @@ export default class ListenerApp extends EventComponent{
     sessions={};
     blinks={};
 
+    /**
+     * @type {ListenerApp}
+     */
     static instance;
     static menuPromise
     #f=m=>this.#onWSMessage(m); //Set a function to be able to unbind later
@@ -115,10 +120,23 @@ export default class ListenerApp extends EventComponent{
 
         this.wsh = new ListenerClientHandler(props.placeId);
         this.placeSession = new PlaceSession(props.placeId);
-        this.layoutSVG = <SynchronizedLayoutSVG key="SVG" placeId={this.placeId} onTableSelect={t=>this.selectTableByCode(t)} placeSession={this.placeSession}/>
+        
 
-        console.log(this.wsh);
-        this.wsh.on("handshake-finished",()=>this.#sync());
+        this.wsh.on("handshake-rejected",()=>{
+            localStorage.removeItem("clocked-in");
+            location.reload();
+        });
+        this.wsh.on("handshake-finished",()=>{
+            this.placeSession.off("change",this.#u);
+
+            this.placeSession = PlaceSession.import(this.placeId,this.wsh.syncData);
+            this.placeSession.on("change",this.#u);
+
+            this.layoutSVG = <SynchronizedLayoutSVG key={this.sess_changes++} placeId={this.placeId} selectedTable={this.state.selectedTable} onTableSelect={t=>this.selectTableByCode(t)} placeSession={this.placeSession}/>;
+
+            this.do("session-refresh",this.placeSession);
+            this.forceUpdate();
+        });
         this.wsh.on("message",this.#f);
 
         ListenerApp.menuPromise = API(`/place/menu/${props.placeId}`).then(r=>{
@@ -134,14 +152,28 @@ export default class ListenerApp extends EventComponent{
             this.menuByCategory = categorized;
             this.menuCategories = Object.keys(cats);
             this.menu = o;
-        });
+        }).catch(e=>console.log("Failed to load menu for listener app"));
+
+        this.place = {id:this.placeId,title:"Φόρτωση"};
+
+        ListenerApp.placePromise = API(`/place/view/${props.placeId}`).then(r=>{
+            this.place.title=r.name;
+        })
         ListenerApp.instance = this;
     }
-    #sync(){
-        for(let i of Object.keys(this.wsh.syncData))
-            this.placeSession.getLatestTableSession(i).sync(this.wsh.syncData[i]);
+    calculatePrice(entry){
+        if(!this.menu)return 0;
+        
+        const dish = this.menu[entry.code];
+        if(!dish)return 0;
 
-        this.forceUpdate();
+        const basePrice = dish.price;
+        let ingredientPrice = 0;
+        for(let i of this.menu[entry.code].ingredients){
+            if(i.price&&entry.ingredients.includes(i.title))
+                ingredientPrice += i.price;
+        }
+        return (basePrice+ingredientPrice)*(entry.count||1);
     }
     #u = ()=>window.requestAnimationFrame(()=>this.forceUpdate());
     componentWillUnmount(){
@@ -173,10 +205,13 @@ export default class ListenerApp extends EventComponent{
         //Do all types that don't require table first
         switch(msg.type){
             case "state":return msg.open;
+            case "waiter-change":
+                this.placeSession.setWaiter(msg);
+                return;
         }
 
         //The rest require table info. Might as well stop trying if there is no table
-        if(!msg.table)return console.trace("No table in message: ", msg);
+        if(!msg.table)return console.trace("Μήνυμα δεν περιείχε πληροφορίες τραπεζιού. Ενημερώστε την υποστήριξη Savor: ", msg);
         const table = msg.table;
         const tbl = this.placeSession.getLatestTableSession(table);
         delete msg.table;
@@ -205,7 +240,7 @@ export default class ListenerApp extends EventComponent{
                 tbl.sendOrder();
                 break;
 
-            case "cancel-order":
+            case "order-cancelled":
                 tbl.activeOrder.cancel(msg);
                 break;
 
@@ -231,3 +266,4 @@ export default class ListenerApp extends EventComponent{
         }
     }
 }
+

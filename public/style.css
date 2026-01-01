@@ -108,10 +108,20 @@ input[type=number]:not(.buttons-on)::-webkit-outer-spin-button {
     box-shadow: 0 0 5px 5px rgba(0,0,0,0.1);
 }
 .topbar2 .topbar-around{
-    width: var(--topbar-height);
+    width: calc(2.25 * var(--topbar-height));
     height: var(--topbar-height);
-    place-content: center;
-    text-align: center;
+    align-content: center;
+}
+.topbar2 .topbar-around.logo{
+    justify-content: right;
+    text-align: right;
+    padding: 15px;
+}
+.topbar2 .topbar-around.logo img{
+    padding: 5px;
+    border-radius: 5px;
+    background-color: rgba(255,255,255,0.8);
+    height: 100%;
 }
 .topbar-around:first-child > *{
     background-color: white;
@@ -908,6 +918,13 @@ a.no-default{
     justify-content: center;
 }
 
+.content-centered{
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    place-content: center;
+}
+
 .card {
     width: 250px;
     border: 1px solid #ddd;
@@ -937,6 +954,11 @@ a.no-default{
 @media screen and (max-width: 800px) {
     :root{
         --topbar-height: 75px;
+    }
+}
+@media screen and (pointer: coarse) {
+    *{
+        user-select: none;
     }
 }
 @keyframes blink{

@@ -15,5 +15,9 @@ export function API(url,method="GET",body={},options={}){
 
         initObj.headers["Content-type"] = "application/json";
     }
-    return fetch(url,initObj).then(r=>r.json());
+    return fetch(url,initObj)
+    .then(r=>r.json())
+    .catch(e=>{
+        return Promise.reject({success:false,error:"Couldn't connect to API server"});
+    });
 }

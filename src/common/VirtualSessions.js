@@ -7,14 +7,36 @@ class Unit extends MyEventTarget{
         this.type=type;
     }
 }
+
+export class Waiter extends Unit{
+    id;#title=false;#pin;
+    constructor(id,pin){
+        super("waiter");
+        this.id=id;
+        this.#pin=pin;
+    }
+    set title(v){
+        this.#title = v;
+        this.do("change");
+    }
+    get title(){return this.#title}
+    set pin(v){
+        this.#pin=v;
+        this.do("change");
+    }
+    get pin(){return this.#pin}
+}
+
 class Order extends Unit{
     cart;
     comments;
     accepted=false;
     rejected=false;
     delivered=false;
+    cancelled=false;
     session;
     time;
+    paid=false;
     constructor(tableSession,cart,comments,timestamp=Date.now()){
         super("order");
         this.cart=cart;
@@ -24,16 +46,12 @@ class Order extends Unit{
             this.session=tableSession;
         }
     }
-    //To clear up confusion:
-    // "cancel": order cancelled by the client
-    // "accept": order accepted by the store
-    // "reject": order rejected by the store
-    // "deliver": after being accepted, order delivered by a waiter and received by the table
-    // Also I'm making all that very error-prone, keeping in mind that it will only be called by savor.
-    // If someone decides to mess with it that's none of my concern
+    pay(){
+        this.paid = true;
+        this.do("change");
+    }
     cancel(){
-        const arr = this.session.orders;
-        arr.splice(arr.indexOf(this),1);
+        this.cancelled=true;
         this.do("change");
     }
     accept(){
@@ -50,6 +68,17 @@ class Order extends Unit{
         this.delivered = true;
         this.do("change");
     }
+    static import(tableSession,data){
+        const _this = new Order(tableSession,data.cart);
+
+        if(data.rejected)_this.rejected=true;
+        if(data.accepted)_this.accepted=true;
+        if(data.delivered)_this.delivered=true;
+        if(data.cancelled)_this.cancelled=true;
+        if(data.paid)_this.paid=true;
+
+        return _this;
+    }
     export(){
         const obj = {
             cart:this.cart,
@@ -59,6 +88,8 @@ class Order extends Unit{
         if(this.rejected)obj.rejected=true;
         if(this.accepted)obj.accepted=true;
         if(this.delivered)obj.delivered=true;
+        if(this.cancelled)obj.cancelled=true;
+        if(this.paid)obj.paid=true;
 
         return obj;
     }
@@ -82,32 +113,21 @@ export class TableSession extends MyEventTarget{
         this.place=place;
         this.table=table;
     }
-    sync(syncData){
-        const orders = [];
-        for(let i of syncData.orders){
-            const order = new Order(this,i.cart,null,i.timestamp);
-
-            if(i.accepted)order.accept();
-            if(i.delivered)order.deliver();
-            if(i.rejected)order.reject();
-
-            order.on("change",()=>this.do("change"));
-            orders.push(order);
-        }
-        this.orders = orders;
-        this.cart = syncData.cart;
-        this.connects = syncData.connections;
-        this.paid = syncData.paid;
-
-        this.do("change");
-    }
+    
     sendOrder(){
         const order = new Order(this,this.cart,null);
         this.orders.push(order);
-        console.log(order);
+        order.on("change",()=>this.do("change"));
+
         this.cart = {};
         this.do("change");
         return order;
+    }
+    cancelOrder(){
+        const order = this.activeOrder;
+        if(!order)return;
+        order.cancel();
+        this.do("change");
     }
     changeInCart(key,newEntry){
         this.cart[key] = newEntry;
@@ -117,7 +137,7 @@ export class TableSession extends MyEventTarget{
         delete this.cart[key];
         this.do("change");
     }
-    addToCart(key,entry){console.log("add to cart")
+    addToCart(key,entry){
         this.cart[key] = entry;
         this.do("change");
     }
@@ -140,9 +160,12 @@ export class TableSession extends MyEventTarget{
     get balance(){
         return this.total-this.paid;
     }
+    /**
+     * @returns {Order}
+     */
     get activeOrder(){
         const candidate = this.orders.at(-1);
-        return candidate?.delivered?null:candidate;
+        return (candidate?.delivered||candidate?.cancelled)?null:candidate;
     }
     get canOrder(){
         return !this.activeOrder;
@@ -166,6 +189,44 @@ export class TableSession extends MyEventTarget{
             this.do("change");
         }
     }
+    sync(syncData){
+        const orders = [];
+        for(let i of syncData.orders){
+            const order = new Order(this,i.cart,null,i.timestamp);
+
+            if(i.accepted)order.accept();
+            if(i.delivered)order.deliver();
+            if(i.rejected)order.reject();
+            if(i.cancelled)order.cancel();
+            if(i.paid)order.pay();
+
+            //Listen to change events after the order has been initialized
+            order.on("change",()=>this.do("change"));
+            orders.push(order);
+        }
+        this.orders = orders;
+        this.cart = syncData.cart;
+        this.connects = syncData.connections;
+        this.paid = syncData.paid;
+
+        this.do("change");
+    }
+    static import(placeId,table,data){
+        const _this = new TableSession(placeId,table);
+        const orders = [];
+        for(let i of data.orders){
+            const order = Order.import(_this,i);
+
+            orders.push(order);
+            order.on("change",()=>_this.do("change"));
+        }
+        _this.orders = orders;
+        _this.cart = data.cart;
+        _this.connects = data.connections;
+        //_this.paid = data.paid;
+
+        return _this;
+    }
     export(){
         return {
             table:this.table,
@@ -177,11 +238,24 @@ export class TableSession extends MyEventTarget{
 export class PlaceSession extends MyEventTarget{
     placeId;
     tables={};
+    waiters={};
     #f;
     constructor(placeId){
         super();
         this.placeId=placeId;
         this.#f=(...args)=>this.do("change",...args);
+    }
+    addWaiter(waiter){
+        if(this.waiters[waiter.id] instanceof Waiter)return;
+        this.waiters[waiter.id] = waiter;
+        waiter.on("change",this.#f);
+    }
+    setWaiter({id,title,pin}){
+        const waiter = this.waiters[id];
+        if(!waiter)return false;
+
+        if(pin)waiter.pin = pin;
+        if(title!==undefined)waiter.title = title;
     }
     tableConnect(table){
         let sessList = this.tables[table];
@@ -257,6 +331,22 @@ export class PlaceSession extends MyEventTarget{
             delete timedList[maximum];
         }
         return sortedList;
+    }
+    static import(placeId, data){
+        const _this = new PlaceSession(placeId);
+        for(let i of Object.keys(data.tables)){
+            const table = TableSession.import(placeId,i,data.tables[i]);
+            _this.tables[i] = [table];
+            table.on("change",()=>_this.do("change"));
+        }
+        for(let id of Object.keys(data.waiters)){
+            const src = data.waiters[id];
+            const dest = new Waiter(id,src.pin);
+            _this.addWaiter(dest);
+            
+            dest.title = src.title||false;
+        }
+        return _this;
     }
     export(){
         return {

@@ -1,4 +1,5 @@
 import ListenerApp, { TableSessionManager } from "./ListenerAppBase";
+import WaiterManager from "./WaiterManagement";
 
 function NoFullscreen(){
     return <div>
@@ -37,21 +38,29 @@ export default class OwnerApp3 extends ListenerApp{
                     <div className="layout-edit-btn-wrapper">
                         <a href={`/dashboard/${this.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>
                     </div>
-                    {this.layoutSVG}
+                    {this.layoutSVG||
+                        <div style={{
+                            textAlign:"center",
+                            fontSize:"3em",
+                            justifyContent:"center",
+                            display:"flex",
+                            flexDirection:"column",
+                            height:"100%"}}>
+                                Φόρτωση κάτοψης...
+                        </div>
+                    }
                 </div>
                 <div className="listener-full-left">
-                    <NoFullscreen/>
+                    <WaiterManager key={this.sess_changes}/>
                 </div>
                 <div className="listener-bottom-center" style={{borderTop:"1px solid"}}>
                     <TableSessionManager table={this.state.selectedTable}/>
                 </div>
                 <div className="listener-full-right">
-                    a
+                    <NoFullscreen/>
                 </div>
             </div>
         );
     }
 }
 window.LiveViewApp = OwnerApp3;
-
-window.addEventListener("load", function() { window. scrollTo(0, 1); console.log("Fullscreening") });

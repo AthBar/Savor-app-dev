@@ -44,11 +44,12 @@ class PaymentWindow extends React.Component{
 }
 
 export class OrderHistory extends React.Component{
+    #f=()=>this.forceUpdate();
     constructor(props){
         super(props);
         this.state = {menu:undefined};
         
-        UserApp.instance.tableSession.on("change",()=>this.forceUpdate())
+        
         UserApp.menuPromise.then(l=>{
             const menu = {};
             for(let i of l){
@@ -59,27 +60,36 @@ export class OrderHistory extends React.Component{
             this.setState({menu});
         });
     }
+    componentDidMount(){
+        this.#sync();
+        UserApp.instance.on("session-refresh",prev=>this.#sync(prev));
+    }
+    #sync(prev){
+        if(prev)prev.off("change",this.#f);
+        UserApp.instance.tableSession.on("change",this.#f);
+    }
     CreateOrder(data,key){
         return <div className="history-group" key={key}>
                     <div className="history-text">Παραγγελία</div>{Object.values(data.cart).map(
                 (o,i)=> <div className="history-unit" key={i}>
                         <div className="history-joiner"/>
-                        <div className="history-text">{this.state.menu[o.code].title}</div>
+                        <div className="history-text">{o.count>1?o.count+"x ":null}{this.state.menu[o.code].title}</div>
                     </div>
                 )}
                 </div>
     }
     OrderHistoryUnit(data,key){
         const arr = [this.CreateOrder(data,key)];
+        if(data.cancelled)arr.push(<div className="history-text" key={key+"-canc"}>Ακύρωση παραγγελίας (από προσωπικό)</div>)
         if(data.accepted)arr.push(<div className="history-text" key={key+"-acc"}>Αποδοχή παραγγελίας</div>)
-        if(data.rejected)arr.push(<div className="history-text" key={key+"-acc"}>Απόρριψη παραγγελίας</div>)
+        if(data.rejected)arr.push(<div className="history-text" key={key+"-rej"}>Απόρριψη παραγγελίας</div>)
         if(data.delivered)arr.push(<div className="history-text" key={key+"-del"}>Παράδοση παραγγελίας</div>)
         return arr;
     }
     render(){
         if(!this.state.menu)return <div className="history"/>
         return <div className="history">
-                    <div className="history-title" style={{textAlign:"center"}}>Σύνολο: {currency(UserApp.instance.tableSession.total)}</div>
+                    <div className="history-title" style={{textAlign:"center"}}>Σύνολο: {currency(UserApp.instance.total)}</div>
                     <div className="history-contents">
                         {UserApp.instance.tableSession.orders.map((u,i)=>this.OrderHistoryUnit(u,i))}
                     </div>
@@ -90,10 +100,9 @@ export class OrderHistory extends React.Component{
 function Buttons({openPaymentPopup}){
     const nav = useNavigate();
     return  <div className="options">
-                {!UserApp.instance.hasActiveOrder?
-                    <div className="option animating" onClick={()=>{if(!UserApp.instance.hasActiveOrder)nav("/store/menu")}}>Παραγγελία</div>
-                :null}
-                <div className="option" onClick={()=>openPaymentPopup(true)}>Μερική/πλήρης πληρωμή</div>
+                <div className="option animating" onClick={()=>nav("/store/menu")}>{
+                    UserApp.instance.hasActiveOrder?"Περιήγηση στον κατάλογο":"Παραγγελία"
+                }</div>
             </div>
 }
 

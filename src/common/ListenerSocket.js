@@ -14,7 +14,6 @@ export class ListenerClientHandler extends WebsocketHandler{
         this._handshake();
         ListenerClientHandler.instance = this;
         this.websocket.addEventListener("close",e=>{
-            console.log(e);
             if(e.code==1008){
                 debugger;
             }
