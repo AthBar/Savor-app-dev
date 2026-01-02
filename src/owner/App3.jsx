@@ -22,6 +22,7 @@ export default class OwnerApp3 extends ListenerApp{
             ...this.state,
             pad:this.#zoom
         }
+        this.wsh.on("auth-error",()=>location.replace("/auth/login"));
         OwnerApp3.instance = this;
     }
     zoom(dY){

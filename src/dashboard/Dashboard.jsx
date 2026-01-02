@@ -28,7 +28,7 @@ export default class Dashboard extends React.Component{
             delete r.success;
             delete r.code;
             this.setState({placeLoaded:true});
-        })
+        });
     }
     render(){
         if(this.state.failure)return <div>{"Error: "+this.place.code}</div>;

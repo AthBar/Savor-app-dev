@@ -1,9 +1,17 @@
 import { useState } from "react";
 
+const _=_=>_;
+window.topbar = {
+    setTitle:_
+};
 
-export default function({title}){
-    const [_,redraw]=useState(0);
+export default function(){
+    const [_,redraw] = useState(0);
+    const [title,setTitle] = useState("");
+
+    window.topbar.setTitle = setTitle;
     document.addEventListener("fullscreenchange",()=>redraw(_+1));
+
     return <div className="dashboard-topbar">
         <div style={{
             fontSize:"2em",

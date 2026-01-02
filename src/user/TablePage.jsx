@@ -97,12 +97,18 @@ export class OrderHistory extends React.Component{
     }
 }
 
-function Buttons({openPaymentPopup}){
+function Buttons(){
     const nav = useNavigate();
+    const active = UserApp.instance.hasActiveOrder
     return  <div className="options">
-                <div className="option animating" onClick={()=>nav("/store/menu")}>{
-                    UserApp.instance.hasActiveOrder?"Περιήγηση στον κατάλογο":"Παραγγελία"
-                }</div>
+                <div className={"option"+(active?"":" animating")} onClick={()=>nav("/store/menu")}>
+                    {active?"Περιήγηση στον κατάλογο":"Παραγγελία"}
+                </div>
+                {UserApp.instance.total<=0&&UserApp.instance.tableSession.orders.length>0?
+                <div className="option animating" onClick={()=>UserApp.instance.leave()}>
+                    Αποχώρηση
+                </div>
+                :null}
             </div>
 }
 

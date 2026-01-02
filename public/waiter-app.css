@@ -143,9 +143,31 @@
     gap: 15px;
 }
 .worker-login > div{
+    border: 1px solid;
+    box-shadow: 0 0 10px 5px rgba(0,0,0,0.2);
+    padding: 25px;
+    border-radius: 12px;
+}
+.worker-login > div > div{
     display: flex;
+    flex-direction: column;
     gap: 10px;
+}
+.worker-login > div > div > div{
+    display: grid;
+    gap: 10px;
+    grid-template-columns: 50px 1fr;
     align-items: center;
+}
+.worker-login select, .worker-login input, .worker-login button{
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid;
+}
+.worker-login button{
+    padding: 12px;
+    grid-column: 1/3;
+    font-size: 1.5em;
 }
 .waiter-summary-wrapper{
     max-height: 100%;

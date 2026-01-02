@@ -113,7 +113,9 @@ export class TableSession extends MyEventTarget{
         this.place=place;
         this.table=table;
     }
-    
+    pay(){
+        this.orders.forEach(o=>o.delivered?o.pay():null);
+    }
     sendOrder(){
         const order = new Order(this,this.cart,null);
         this.orders.push(order);
@@ -151,10 +153,6 @@ export class TableSession extends MyEventTarget{
     }
     deliverOrder(){
         this.orders.at(-1).deliver();
-        this.do("change");
-    }
-    pay(amount){
-        this.paid += amount;
         this.do("change");
     }
     get balance(){
@@ -256,6 +254,7 @@ export class PlaceSession extends MyEventTarget{
 
         if(pin)waiter.pin = pin;
         if(title!==undefined)waiter.title = title;
+        this.do("waiter-change",waiter);
     }
     tableConnect(table){
         let sessList = this.tables[table];

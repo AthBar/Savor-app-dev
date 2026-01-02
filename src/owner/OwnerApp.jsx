@@ -1,6 +1,6 @@
 import MyEventTarget, { EventComponent } from "../common/Event";
 import { ListenerClientHandler } from "../common/ListenerSocket";
-import { Route, Routes, useParams } from "react-router";
+import { Route, Routes, useNavigate, useParams } from "react-router";
 import OwnerApp2 from "./App2";
 import LayoutSVG from "./LayoutSVG";
 import LayoutDesigner from "./LayoutDesigner";
@@ -8,7 +8,7 @@ import { PlaceSession } from "../common/VirtualSessions";
 import PlaceSelection from "../dashboard/PlaceSelection";
 import DashboardTopbar from "../dashboard/DashboardTopbar";
 import Dashboard from "../dashboard/Dashboard";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import OwnerApp3 from "./App3";
 import LayoutEditor from "./LayoutEditor";
 import MobileApp from "./MobileApp";
@@ -40,14 +40,25 @@ class DashboardRouter extends React.Component{
     _Waiter(){
         const {id} = useParams();
         const [_,redraw] = useState(0);
+        const nav = useNavigate();
 
-        const toShow = localStorage.getItem("clocked-in")?<MobileWaiterApp placeId={id}/>:<ClockInPrompt placeId={id}/>;
-        const match = window.matchMedia('(pointer: coarse)');
+        //Check if clocked in and if not, then make sure we are in the starter page
+        const clockedIn = localStorage.getItem("clocked-in");
+        useEffect(()=>clockedIn&&location.pathname!=`/dashboard/waiter/${id}`?undefined:nav(`/dashboard/waiter/${id}`),[]);
+
+        const toShow = clockedIn?<MobileWaiterApp placeId={id}/>:<ClockInPrompt placeId={id}/>;
+        const match = window.matchMedia('screen and (pointer: coarse) and (orientation:landscape)');
         const shouldShowMobileApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
 
+        function Disabled(){
+            return <div className="content-centered" style={{fontSize:"2em"}}>
+                Πρέπει να βρίσκεστε σε συσκευή με οθόνη αφής σε οριζόντιο προσανατολισμό (πορτρέτο)
+                <div style={{padding:"20px"}}><img src="/rotate.svg" width="50"/></div>
+            </div>
+        }
 
-        return shouldShowMobileApp?toShow:<div>Πρέπει να βρίσκεστε σε συσκευή με οθόνη αφής</div>;
+        return shouldShowMobileApp?toShow:<Disabled/>;
     }
     _LayoutEditor(){
         const {id} = useParams();
@@ -60,7 +71,7 @@ class DashboardRouter extends React.Component{
     _Watch(){
         const {id} = useParams();
         const [_,redraw] = useState(0);
-        const match = window.matchMedia('(pointer: fine)');
+        const match = window.matchMedia('screen and (pointer: fine)');
         const shouldShowPCApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
 

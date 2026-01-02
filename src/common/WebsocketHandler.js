@@ -37,8 +37,18 @@ export class WebsocketHandler extends MyEventTarget{
             else if(!this.#ready){
                 this.do("handshake-rejected",e);
             }
+            else if(e.code==1008){
+                try{
+                    let json = JSON.parse(e.reason);
+
+                    console.log("Αποβολή WebSocket. Αυτό δεν θα έπρεπε να συμβεί. Παρακαλώ ενημερώστε την υποστήριξη: ",json)
+                }
+                catch(e){
+                    console.warn("Αποβολή WebSocket από τον server (1008) με non-JSON response. Αυτό δεν θα έπρεπε να συμβεί. Παρακαλώ ενημερώστε την υποστήριξη")
+                }
+            }
             else{
-                console.log("what the hell")
+                console.warn("WebSocket closed with unknown close frame. Please notify support: ",e);
             }
             this.connected = false;
             this.#ready = false;
@@ -103,7 +113,7 @@ export class WebsocketHandler extends MyEventTarget{
 
         //Start the basic message listener
         this.websocket.addEventListener("message",e=>{
-            if(e.data=="ACK")this.blocked = false;
+            if(e.data=="ACK")return this.blocked = false;
             else try{e=JSON.parse(e.data)}
             catch(e){return}
             this.do("message",e);
@@ -185,7 +195,7 @@ export class WebsocketHandler extends MyEventTarget{
         //Wait for the server response
         const responseF = e=>{
             this.websocket.removeEventListener("message",responseF);
-            this.blocked=false;
+            if(e.data=="ACK")this.blocked=false;
 
             if(typeof e.data !== "string")return msg[2]("Receieved non-string response: ", e.data);
             if(e.data.startsWith("NO"))return msg[2](e.data.slice(3));

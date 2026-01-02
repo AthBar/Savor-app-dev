@@ -1,4 +1,4 @@
-import { Routes, Route } from "react-router";
+import { Routes, Route, useNavigate } from "react-router";
 import CartPage from './Cart.jsx';
 import TablePage from './TablePage.jsx';
 import  MainPage from './MainPage.jsx';
@@ -10,8 +10,10 @@ import React from 'react';
 import { TableSession } from "../common/VirtualSessions.js";
 import { API } from "../common/functions.js";
 import { EventComponent } from "../common/Event.js";
+import GoodbyePage from "./GoodbyePage.jsx";
 
 function Router(){//Empty string is root, * is unmatched
+    UserApp.instance.nav = useNavigate();
     return <Routes>
             <Route path="" element={<TablePage/>}/>
             <Route path="menu" element={<MainPage/>}/>
@@ -19,6 +21,7 @@ function Router(){//Empty string is root, * is unmatched
             <Route path="destination-selector" element={<AddressPage/>}/>
             <Route path="QR" element={<QRPage/>}/>
             <Route path="test" element={<TestPage/>}/>
+            <Route path="complete" element={<GoodbyePage/>}/>
             <Route path="*" element={<p>404</p>}/>
         </Routes>
 }
@@ -65,6 +68,7 @@ export default class UserApp extends EventComponent{
     place;
     placeClosedPopupOn=false;
 
+    nav;
     #cart=[];
     #globals={made:false};
     menu;
@@ -138,6 +142,9 @@ export default class UserApp extends EventComponent{
 
         console.warn(...str);
     }
+    leave(){
+        this.wsh.send({type:"leave"});
+    }
     addToCart(entry){
         this.wsh.send({type:"add-to-cart",entry})
     }
@@ -173,7 +180,7 @@ export default class UserApp extends EventComponent{
     }
     get total(){
         return this.tableSession.orders.reduce((c,v)=>{
-            if(v.rejected||v.cancelled)return c;
+            if(v.rejected||v.cancelled||v.paid)return c;
             else return c+Object.values(v.cart).reduce((c,v)=>c+this.calculatePrice(v),0);
         },0)
     }
@@ -294,8 +301,12 @@ export default class UserApp extends EventComponent{
             case "disconnected":
                 this.tableSession.disconnected();
                 break;
-            case "paid":console.log("PAYMENT ",msg)
-                this.tableSession.pay(msg.amount);
+            case "paid":
+                this.tableSession.pay();
+                break;
+            case "left":
+                this.left = true;
+                this.nav("/store/complete");
                 break;
             case "state":
                 if(!this.#placeClosedPopupOn){
@@ -311,6 +322,7 @@ export default class UserApp extends EventComponent{
     }
     #placeClosedPopupOn;
     render(){
+        if(this.left)this.nav("/store/complete");
         if(!this.state.destination)return "Loading...";
         return this.state.dimensionsRight?
         [<Router key={this.sess_changes}/>,

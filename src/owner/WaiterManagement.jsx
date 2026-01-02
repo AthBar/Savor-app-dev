@@ -2,6 +2,59 @@ import React, { useState } from "react";
 import ListenerApp from "./ListenerAppBase";
 import OwnerApp3 from "./App3";
 
+function HideablePin({ pin }) {
+  const [visible, setVisible] = useState(true);
+
+  return (
+    <span
+      onClick={() => setVisible(v => !v)}
+      style={{
+        backgroundColor: '#ccc',
+        color: '#000',
+        cursor: 'pointer',
+        padding: '2px 4px',
+        borderRadius: '3px',
+        fontFamily: 'monospace',
+        fontSize:"1.25em",
+        textAlign:"center",
+        userSelect: "none",
+        whiteSpace:"nowrap"
+      }}
+      title={`Κάνετε κλικ για να ${visible?"κρύψετε":"δείτε"} το PIN`}
+    >
+      {visible?pin:"- - -"}
+    </span>
+  )
+}
+
+function RerollPin({id}){
+    return <button style={{
+        background: "#ddd",
+        borderRadius: "3px",
+        textAlign: "center",
+        userSelect:"none",
+        border:"none",
+        cursor:"pointer"
+    }} 
+    className="content-centered" 
+    title="Κάνετε κλικ για να αλλάξετε το PIN"
+    onClick={()=>WaiterManager.instance.rerollPin(id)}>
+        ~
+    </button>;
+}
+
+function PinDisplay({id,pin}){
+    return  <div style={{
+                display:"grid",
+                gridTemplateColumns:"1fr 25px",
+                height:"25px",
+                gap:"5px"
+            }}>
+                <HideablePin pin={pin}/>
+                <RerollPin id={id}/>
+            </div>
+}
+
 class WaiterWidget extends React.Component{
     self;
     constructor(props){
@@ -43,22 +96,32 @@ class WaiterWidget extends React.Component{
                 <div>Όνομα:</div>
                 <input type="text" defaultValue={this.state.title} onBlur={e=>this.setName(e.target.value)}/>
                 <div>PIN:</div>
-                <input type="number" defaultValue={this.state.pin||""} disabled/>
+                <PinDisplay id={this.self.id} pin={this.state.pin}/>
                 <button className="delete" onClick={()=>this.setName(false)}/>
         </div>
     }
 }
 
 export default class WaiterManager extends React.Component{
+    static instance;
     constructor(props){
         super(props);
         const app = ListenerApp.instance;
+        WaiterManager.instance = this;
         this.state = {
             waiters:app.placeSession.waiters
         }
         app.on("session-refresh",sess=>{
             this.setState({waiters:sess.waiters})
         });
+    }
+    #canReroll=true;
+    rerollPin(id){
+        if(!this.#canReroll)return;
+        if(!this.state.waiters[id])return;
+        this.#canReroll = false;
+        setTimeout(()=>this.#canReroll=true,2000);
+        return ListenerApp.instance.wsh.send({type:"reroll-waiter-pin",id});
     }
     render(){
         const waiterList = Object.values(this.state.waiters);

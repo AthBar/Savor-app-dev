@@ -2,6 +2,7 @@ import { Route, Routes, useNavigate, useParams } from "react-router";
 import ListenerApp from "./ListenerAppBase";
 import { useEffect, useState } from "react";
 import { API, currency } from "../common/functions";
+import { Waiter } from "../common/VirtualSessions";
 
 function MenuDishOptions({dish,category,table,onSubmit,...props}){
     const nav = useNavigate();
@@ -179,7 +180,7 @@ function Overview(){
 }
 function TimeSince({startDate}){
     const [_,redraw] = useState(0);
-    useEffect(()=>{console.log("render")
+    useEffect(()=>{
         const id = setTimeout(()=>redraw(_+1),1000);
         return ()=>clearTimeout(id);
     });
@@ -191,9 +192,8 @@ function TimeSince({startDate}){
     const hours = Math.floor(minutes/60);
 
     const hstr = hours?hours.toString().padStart(2,"0")+":":"";
-    const mstr = minutes>0?(minutes%60).toString().padStart(2,"0")+":":"";
+    const mstr = (minutes%60).toString().padStart(2,"0")+":";
     const sstr = (seconds%60).toString().padStart(2,"0");
-    console.log([hstr,mstr,sstr])
     return hstr+mstr+sstr;
 }
 
@@ -201,14 +201,13 @@ function ProfilePage(){
     const [_,redraw] = useState(0);
 
     const app = MobileWaiterApp.instance;
-    useEffect(()=>(MobileWaiterApp.placePromise.then(()=>{
-        redraw(_+1);
-        MobileWaiterApp.instance.placeSession.on("change",()=>redraw(_+1))
-    }),undefined),[]);
-
-    const data = localStorage.getItem("clocked-in");
-    const waiter = app.placeSession.waiters[data?JSON.parse(data).id:-1]||{};
-    const clockInTime = data?JSON.parse(data).clockInTime:null;
+    useEffect(()=>{
+        MobileWaiterApp.placePromise.then(()=>{
+            redraw(_+1);
+            MobileWaiterApp.instance.placeSession.on("change",()=>redraw(_+1))
+        });
+    },[]);
+    useEffect(()=>window.topbar.setTitle(""))
 
     function unixToTimeString(unix){
         const date = new Date(unix);
@@ -216,22 +215,22 @@ function ProfilePage(){
         const minutes = date.getMinutes().toString().padStart(2,"0");
         return `${hours}:${minutes}`;
     }
-
+    let clockInTime = 0;
     
 
     return <div>
-        <h2 style={{textAlign:"center"}}>Μέλος προσωπικού: {waiter.title}</h2>
-        <div style={{padding:"10px"}}>
+        <h2 style={{textAlign:"center"}}>Μέλος προσωπικού: {MobileWaiterApp.instance.waiter.title}</h2>
+        <div style={{padding:"10px",lineHeight:"1.5"}}>
             <div>Επιχείρηση: {app.place.title}</div>
             <div>Ώρα σύνδεσης: {clockInTime?unixToTimeString(clockInTime):"Μή διαθέσιμη"}</div>
-            <div>Ρόλος: Εξυπηρέτηση πελατών</div>
-            <div>Συνδεδεμένος για: <TimeSince startDate={clockInTime}/></div>
+            <div>Ρόλος: {clockInTime?"Εξυπηρέτηση πελατών":"Διαχείρηση"}</div>
+            <div>Συνδεδεμένος για: {clockInTime?<TimeSince startDate={clockInTime}/>:"Μη διαθέσιμο"}</div>
         </div>
         <BackButton url={app.startingPageURL}/>
     </div>
 }
 
-function LayoutPage({layout}){console.log(MobileWaiterApp.instance.startingPageURL)
+function LayoutPage({layout}){
     MobileWaiterApp.instance.nav = useNavigate();
     return <div style={{padding:"16px"}}>
         {layout}
@@ -264,7 +263,7 @@ function CartPage({table}){
                 <div className="waiter-fixed-title">Καλάθι για {table}</div>
                 <div style={{height:"100%",padding:"50px"}}>
                 <div className="waiter-x-selector">
-                    {map.length>0?map:<div style={{textAlign:"center"}}>Άδειο καλάθι</div>}
+                    {map.length>0?map:<div style={{textAlign:"center",fontSize:"1.5em"}}>Άδειο καλάθι</div>}
                 </div>
                 </div>
                 <BackButton url={MobileWaiterApp.instance.startingPageURL+"/"+table}/>
@@ -278,27 +277,30 @@ function PaymentPage({table}){
     const tableSession = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
     let orders = tableSession.orders||[];console.log(orders);
     let total = 0;
-    const mainPart = orders.length<=0?<div className="content-centered" style={{width:"100%"}}>Καμία παραγγελία</div>:
-    orders.map((o,i)=>
-        <div key={i} className="waiter-summary-order">
-            <h3 style={{textAlign:"center"}}>Παραγγελία:</h3>
-            <hr/>
-            {Object.values(o.cart).map((entry,j)=>{
-                const dish = MobileWaiterApp.instance.menu[entry.code];
-                const price = MobileWaiterApp.instance.calculatePrice(entry);
-                total += price;
-                return <div key={j}>
-                    {entry.count}x {dish.title} - {currency(price)}
-                </div>
-            })}
-        </div>
-    )
+    const mainPart = orders.map((o,i)=>o.delivered&&!o.paid?
+                        <div key={i} className="waiter-summary-order">
+                            <h3 style={{textAlign:"center"}}>Παραγγελία:</h3>
+                            <hr/>
+                            {Object.values(o.cart).map((entry,j)=>{
+                                const dish = MobileWaiterApp.instance.menu[entry.code];
+                                const price = MobileWaiterApp.instance.calculatePrice(entry);
+                                total += price;
+                                return <div key={j}>
+                                    {entry.count}x {dish.title} - {currency(price)}
+                                </div>
+                            })}
+                        </div>
+                    :null);
+    let hasOrders = false;
+    for(let i of mainPart)if(hasOrders=i)break;
 
     return <div>
         <div className="waiter-fixed-title">Λογαριασμός για {table}</div>
         <div className="waiter-summary-wrapper">
             <div className="waiter-summary-main">
-                {mainPart}
+                {hasOrders?mainPart:
+                    <div className="content-centered" style={{width:"100%",fontSize:"1.5em"}}>Καμία παραγγελία δεν οφείλεται</div>
+                }
             </div>
         </div>
         <div className="waiter-fixed-bottom">
@@ -344,6 +346,7 @@ function CartEditPage({entryToEdit,table}){
 
 export default class MobileWaiterApp extends ListenerApp{
     nav;
+    waiter;
     carts={};
     startingPageURL;
     /**
@@ -354,6 +357,26 @@ export default class MobileWaiterApp extends ListenerApp{
         super(props);
         this.startingPageURL = `/dashboard/waiter/${this.placeId}`;
         MobileWaiterApp.instance = this;
+
+        this.wsh.on("handshake-rejected",()=>{
+            localStorage.removeItem("clocked-in");
+            this.nav(this.startingPageURL);
+        });
+
+        this.wsh.on("waiter-disconnected",()=>{
+            localStorage.removeItem("clocked-in");
+            this.nav(this.startingPageURL);
+        })
+
+        this.wsh.on("handshake-finished",()=>{
+            //Now with the new place session (a listener is added first in the ListenerApp constructor)
+            this.placeSession.on("waiter-change",waiter=>{
+                if(waiter.id==this.waiter.id&&waiter.title==false){
+                    localStorage.removeItem("clocked-in");
+                    this.nav(this.startingPageURL);
+                }
+            })
+        })
     }
     onPaid(table){
         this.wsh.send({type:"pay",table});
@@ -361,6 +384,15 @@ export default class MobileWaiterApp extends ListenerApp{
         // if(!sess)return;
 
         // for(let i of sess.orders)i.pay();
+    }
+    componentDidMount(){
+        ListenerApp.prototype.componentDidMount.call(this);
+        const clockIn = localStorage.getItem("clocked-in");
+        try{
+            const json = JSON.parse(clockIn);
+            this.waiter = new Waiter(json.id, json.pin);
+        }
+        catch(e){console.error("You are NOT authorized")}
     }
     changeCartEntry(table,key,newEntry){
         this.wsh.send({type:"change-in-cart",table,key,newEntry});
@@ -429,13 +461,23 @@ export default class MobileWaiterApp extends ListenerApp{
             <Route path="*" element={<MobileWaiterApp.instance._AutoRedirect url={MobileWaiterApp.instance.startingPageURL+"/"+table}/>}/>
         </Routes>
     }
-    render(){
+    _Router({_this}){
+        useEffect(()=>{
+            window.topbar.setTitle("Συνδεδεμένος ως "+(_this.waiter.title||"admin"));
+        });
+        
+        useEffect(()=>()=>window.topbar.setTitle(""),[]);
+        _this.nav = useNavigate();
+
         return <Routes>
-            <Route path="layout" element={<LayoutPage layout={this.layoutSVG}/>}/>
+            <Route path="layout" element={<LayoutPage layout={_this.layoutSVG}/>}/>
             <Route path="self" element={<ProfilePage/>}/>
-            <Route path=":table/*" element={<this._TablePage/>}/>
-            <Route path="" element={<this._Starting/>}/>
+            <Route path=":table/*" element={<_this._TablePage/>}/>
+            <Route path="" element={<_this._Starting/>}/>
         </Routes>
+    }
+    render(){
+        return <this._Router _this={this}/>
     }
 }
 

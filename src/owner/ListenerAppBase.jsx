@@ -122,10 +122,6 @@ export default class ListenerApp extends EventComponent{
         this.placeSession = new PlaceSession(props.placeId);
         
 
-        this.wsh.on("handshake-rejected",()=>{
-            localStorage.removeItem("clocked-in");
-            location.reload();
-        });
         this.wsh.on("handshake-finished",()=>{
             this.placeSession.off("change",this.#u);
 
@@ -206,12 +202,11 @@ export default class ListenerApp extends EventComponent{
         switch(msg.type){
             case "state":return msg.open;
             case "waiter-change":
+                this.do("waiter-change",msg);
                 this.placeSession.setWaiter(msg);
                 return;
         }
 
-        //The rest require table info. Might as well stop trying if there is no table
-        if(!msg.table)return console.trace("Μήνυμα δεν περιείχε πληροφορίες τραπεζιού. Ενημερώστε την υποστήριξη Savor: ", msg);
         const table = msg.table;
         const tbl = this.placeSession.getLatestTableSession(table);
         delete msg.table;
@@ -256,12 +251,12 @@ export default class ListenerApp extends EventComponent{
                 tbl.activeOrder.deliver(msg);
                 break;
 
-            case "bill":
-                tbl.requests.push(msg);
+            case "paid":
+                tbl.pay();
                 break;
-
-            case "bill-paid":
-                tbl.requests.push(msg);
+            
+            default:
+                this.do("unknown-message",msg);
                 break;
         }
     }

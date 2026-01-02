@@ -14,8 +14,23 @@ export class ListenerClientHandler extends WebsocketHandler{
         this._handshake();
         ListenerClientHandler.instance = this;
         this.websocket.addEventListener("close",e=>{
-            if(e.code==1008){
-                debugger;
+            switch(e.code){
+                case 4001:
+                    this.do("auth-error",e);
+                    break;
+                case 4002:
+                    this.do("waiter-auth-error",e);
+                    break;
+                case 4003:
+                    this.do("waiter-disconnected",e);
+                    break;
+                case 1008:
+                    console.log(e)
+                    debugger;
+                    break;
+                default:
+                    console.log("WS closure: ",e);
+                    break
             }
         })
     }

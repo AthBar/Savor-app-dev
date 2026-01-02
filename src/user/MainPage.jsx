@@ -52,7 +52,7 @@ function HeaderForAll({Y}){
     const placeDirectory = UserApp.instance.place.id||"_";
     return <header>
                 {Y>=switchY?
-                    <Topbar previous={"/store"} showCart active/>:
+                    <Topbar previous={"/store"} showCart={!UserApp.instance.hasActiveOrder} active/>:
 
                     <div className="topbar2" style={{
                         backgroundColor: `rgba(255,255,255,${Y/switchY})`,
