@@ -26,14 +26,14 @@ export class WebsocketHandler extends MyEventTarget{
         this.#setCloseEvents();
         addEventListener("offline",()=>{
             this.websocket.close(4000,"Client went offline");
-            addEventListener("online",()=>this.#reopenLoop(),{once:true})
+            addEventListener("online",()=>this.reopenLoop(),{once:true})
         });
     }
     #setCloseEvents(){
         this.websocket.addEventListener("close",e=>{
             if(e.code==1006){
                 console.log("WebSocket (live system) closed unexpectedly. Attempting to reconnect...", e);
-                this.#reopenLoop();
+                this.reopenLoop();
             }
             else if(e.code==4000){
                 console.log("WebSocket (live system) closed due to client going offline. Waiting for connection to reconnect...");
@@ -59,7 +59,7 @@ export class WebsocketHandler extends MyEventTarget{
         });
     }
     #reopens = 0;
-    async #reopenLoop(){
+    async reopenLoop(){
         console.log("Attempting to reconnect WebSocket (live system)...");
 
         return this.reopen()
@@ -71,7 +71,7 @@ export class WebsocketHandler extends MyEventTarget{
         },()=>{
             const nextDelay = Math.min((2**this.#reopens),30);
             console.log(`Couldn't connect to WebSocket server. Attempting a reconnect in ${nextDelay} seconds`);
-            setTimeout(()=>this.#reopenLoop(),nextDelay*1000);
+            setTimeout(()=>this.reopenLoop(),nextDelay*1000);
             this.#reopens++
         });
     }
@@ -95,7 +95,15 @@ export class WebsocketHandler extends MyEventTarget{
                     return;
             }
         });
-        this.websocket.send("SYNC");
+        
+        await new Promise(r=>this.websocket.addEventListener("message",e=>{
+            if(e.data=="HANDSHAKE"){
+                r();
+                this.websocket.send("SYNC")
+            }
+            else console.error("First message received but was not HANDSHAKE");
+            },{once:true})
+        );
 
         await new Promise((r,j)=>{
             const syncF = e=>{
