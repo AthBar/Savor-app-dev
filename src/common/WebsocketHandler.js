@@ -20,9 +20,9 @@ export class WebsocketHandler extends MyEventTarget{
     #url;#protocols;
     constructor(url,protocols){
         super();
-        this.#url=url;
+        this.#url=ORIGIN+url;
         this.#protocols=protocols;
-        this.websocket = new WebSocket(ORIGIN+url,protocols);
+        this.websocket = new WebSocket(this.#url,protocols);
         this.#setCloseEvents();
         addEventListener("offline",()=>{
             this.websocket.close(4000,"Client went offline");
@@ -143,11 +143,6 @@ export class WebsocketHandler extends MyEventTarget{
      * @returns {Promise}
      */
     reopen(){
-        //If it's connecting or opening (generally not closed or closing) then don't do anything
-        if(![WebSocket.CLOSING,WebSocket.CLOSED].includes(this.websocket.readyState))return false;
-        //If there is already a reconnecting promise, return that one
-        if(this.#reconnectPromise)return this.#reconnectPromise;
-
         try{
             //Open the new WebSocket object
             this.websocket = new WebSocket(this.#url,this.#protocols);

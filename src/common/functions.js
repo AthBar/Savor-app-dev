@@ -1,7 +1,6 @@
 export function currency(price){
     return (price/100||0).toFixed(2)+"€";
 }
-console.log(process.env.TEST);
 
 const API_HOST = import.meta.env.VITE_API_HOST || "api.savor.com.gr";
 const API_PROTOCOL = import.meta.env.VITE_HTTP_PROTOCOL || "http";
