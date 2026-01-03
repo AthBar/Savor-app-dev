@@ -53,9 +53,15 @@ function FullscreenPrompt(){
         document.querySelector("#root").requestFullscreen();
     }
     return  <div className="fullscreen-prompt">
-                Ενεργοποίηση πλήρους οθόνης
-                Η εφαρμογή σερβιτόρου (savor στο κινητό) απαιτεί λειτουργία πλήρους οθόνης για να δουλέψει
-                <button onClick={()=>tryEnterFullscreen()}>Πλήρης οθόνη</button>
+                <div>
+                    Ενεργοποίηση πλήρους οθόνης
+                    Η εφαρμογή κουζίνας (savor στο κινητό) απαιτεί λειτουργία πλήρους οθόνης για να δουλέψει
+                    Η χρήση αυτής της εφαρμογής δεν ενδείκνυται. Προτιμήστε έναν υπολογιστή
+                </div>
+                <hr/>
+                <div style={{textAlign:"center"}}>                    
+                    <button onClick={()=>tryEnterFullscreen()}>Πλήρης οθόνη</button>
+                </div>
             </div>
 }
 
@@ -91,6 +97,9 @@ class MobileApp extends ListenerApp{
     }
     navToStartingPage(){
         return MobileApp.nav(`/dashboard/watch/${this.placeId}/`)
+    }
+    render(){
+        return <div className="content-centered" style={{fontSize:"1.5em"}}>Η εφαρμογή κουζίνας προς το παρόν υποστηρίζεται μόνο από υπολογιστές με κατάλληλες διαστάσεις</div>
     }
 }
 window.MobileApp=MobileApp;

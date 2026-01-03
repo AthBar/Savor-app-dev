@@ -17,16 +17,17 @@ export default class SynchronizedLayoutSVG extends LayoutSVG{
         for(let table of Object.keys(list)){
             const sess = list[table].at(-1);
             const lastOrder = sess.orders.at(-1);
+            const black = sess.connects>0?"#222":"gray";
+            let startColor = black, endColor=black;
+
             if(lastOrder){
                 if(lastOrder.rejected){
-                    this.tableColor(table,"black");
-                    continue;
+                    startColor = endColor = "#800";
                 }
                 if(!lastOrder.accepted){
-                    this.tableColor(table,"black","#a00");
-                    continue;
+                    endColor = "#a00";
                 }
-                if(!lastOrder.delivered){
+                else if(!lastOrder.delivered){
                     this.tableColor(table,"#dd0");
                     continue;
                 }
@@ -34,6 +35,7 @@ export default class SynchronizedLayoutSVG extends LayoutSVG{
             if(sess.connects>0){
                 this.tableColor(table,"gray");
             }
+            this.tableColor(table,startColor,endColor);
         }
         this.forceUpdate();
     }

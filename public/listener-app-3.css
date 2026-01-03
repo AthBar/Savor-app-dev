@@ -44,7 +44,7 @@
 .table-session-viewer .left{
     border-right:1px solid;
     display: grid;
-    grid-template-rows: 70px 1fr;
+    grid-template-rows: 70px 1fr 50px;
 }
 .table-session-viewer .left h2{
     text-align: center;
@@ -58,6 +58,12 @@
     overflow-y: auto;
     overflow-x: hidden;
     max-height: 100%;
+}
+.order-history-container:not(:empty){
+    border-bottom: 1px solid;
+}
+.order-history-container .history-order:last-child{
+    border-bottom: none;
 }
 .history-order{
     border-bottom:1px solid;
@@ -76,9 +82,12 @@
 }
 .no-orders{
     padding: 8px;
+    font-size: 1.5em;
     color:#aaa;
     font-style: italic;
     text-align: center;
+    height: 100%;
+    user-select: none;
 }
 
 .order-overview{
@@ -244,4 +253,15 @@
 }
 .waiters-bottom{
     align-content: center;
+}
+
+.state-title{
+    text-align:center;
+    font-size:2em;
+    font-weight:bold;
+}
+.state-desc{
+    margin-top: 10px;
+    font-size: 1.25em;
+    text-align: center;
 }

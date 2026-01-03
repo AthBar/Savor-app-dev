@@ -216,10 +216,15 @@ function ProfilePage(){
         return `${hours}:${minutes}`;
     }
     let clockInTime = 0;
+
+    try{
+        clockInTime = JSON.parse(localStorage.getItem("clocked-in")).clockInTime
+    }
+    catch(e){}
     
 
     return <div>
-        <h2 style={{textAlign:"center"}}>Μέλος προσωπικού: {MobileWaiterApp.instance.waiter.title}</h2>
+        <h2 style={{textAlign:"center"}}>Μέλος προσωπικού: {MobileWaiterApp.instance.waiter?.title}</h2>
         <div style={{padding:"10px",lineHeight:"1.5"}}>
             <div>Επιχείρηση: {app.place.title}</div>
             <div>Ώρα σύνδεσης: {clockInTime?unixToTimeString(clockInTime):"Μή διαθέσιμη"}</div>
@@ -275,7 +280,7 @@ function CartPage({table}){
 function PaymentPage({table}){
     if(!MobileWaiterApp.instance.menu)return <div>Φόρτωση...</div>;
     const tableSession = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
-    let orders = tableSession.orders||[];console.log(orders);
+    let orders = tableSession.orders||[];
     let total = 0;
     const mainPart = orders.map((o,i)=>o.delivered&&!o.paid?
                         <div key={i} className="waiter-summary-order">
@@ -388,11 +393,17 @@ export default class MobileWaiterApp extends ListenerApp{
     componentDidMount(){
         ListenerApp.prototype.componentDidMount.call(this);
         const clockIn = localStorage.getItem("clocked-in");
+        if(!clockIn)return;
         try{
             const json = JSON.parse(clockIn);
-            this.waiter = new Waiter(json.id, json.pin);
+            this.wsh.on("handshake-finished",()=>
+                this.waiter = this.placeSession.waiters?.[json.id]
+            )
         }
-        catch(e){console.error("You are NOT authorized")}
+        catch(e){
+            localStorage.removeItem("clocked-in")
+            console.error("You are NOT authorized",e,clockIn);
+        }
     }
     changeCartEntry(table,key,newEntry){
         this.wsh.send({type:"change-in-cart",table,key,newEntry});
@@ -463,7 +474,8 @@ export default class MobileWaiterApp extends ListenerApp{
     }
     _Router({_this}){
         useEffect(()=>{
-            window.topbar.setTitle("Συνδεδεμένος ως "+(_this.waiter.title||"admin"));
+            const waiter = MobileWaiterApp.instance.placeSession.waiters[_this.waiter?.id];
+            window.topbar.setTitle("Συνδεδεμένος ως "+(waiter?.title||"admin"));
         });
         
         useEffect(()=>()=>window.topbar.setTitle(""),[]);

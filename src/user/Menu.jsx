@@ -24,7 +24,7 @@ class MenuItem extends React.Component{
         IngredientSelector.instance.open({code:this.state.item.code});
     }
     render(){
-        const canOrder = !UserApp.instance.hasActiveOrder;
+        const canOrder = UserApp.instance.canOrder;
         return (
             <div className="menu-item" onClick={()=>canOrder?this.#select():null}>
                 <div className="item-title">

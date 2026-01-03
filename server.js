@@ -34,7 +34,8 @@ const vite = await createServer({
 app.use(vite.middlewares);
 
 const timeStr = timeNow=>`[${timeNow.getHours()}:${timeNow.getMinutes()}.${timeNow.getSeconds()}]`;
-const httpServer = app.listen(7287,e=>{
+const PORT = process.env.APP_PORT || 7287;
+const httpServer = app.listen(PORT,e=>{
     if(e)return console.log("Encountered error on server startup: ",e);
-    console.log(timeStr(new Date()) + " - Server running on port 7287");
+    console.log(timeStr(new Date()) + " - Server running on port "+PORT);
 });

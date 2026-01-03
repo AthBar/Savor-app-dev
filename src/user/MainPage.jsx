@@ -22,7 +22,7 @@ class Banner extends React.Component{
                 </div>
     }
 }
-const BackSVG = ()=><svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512" width="50px" height="50px" style={{justifySelf:"left",marginLeft:"25px"}}><path fill="currentColor" d="M4.2 247.5L151 99.5c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L69.3 256l118.5 119.7c4.7 4.7 4.7 12.3 0 17L168 412.5c-4.7 4.7-12.3 4.7-17 0L4.2 264.5c-4.7-4.7-4.7-12.3 0-17z"></path></svg>;
+const BackSVG = ()=><svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512" width="50px" height="50px"><path fill="currentColor" d="M4.2 247.5L151 99.5c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L69.3 256l118.5 119.7c4.7 4.7 4.7 12.3 0 17L168 412.5c-4.7 4.7-12.3 4.7-17 0L4.2 264.5c-4.7-4.7-4.7-12.3 0-17z"></path></svg>;
 
 function Topbar({previous,showCart,active}){
     const goToPage = useNavigate()
@@ -37,7 +37,13 @@ function Topbar({previous,showCart,active}){
                 <div className="title">
                     {placeName}
                 </div>
-                {destination?<div className="destination-note">Η παραγγελία θα έρθει στο τραπέζι {destination.table}</div>:null}
+                {destination?<div className="destination-note">{
+                    UserApp.instance.canOrder?
+                    `Η παραγγελία θα έρθει στο τραπέζι ${destination.table}`:
+                    UserApp.instance.tableSession.closed?
+                    "Η επιχείρηση βρίσκεται σε διαδικασία κλεισίματος":
+                    "Δεν μπορείτε να παραγγείλετε αυτή την στιγμή"
+                }</div>:null}
             </div>
   {showCart?<div className="cart" onClick={()=>goToPage("../cart")}>
                 <img src="/images/cart-empty.png"></img>
@@ -52,14 +58,14 @@ function HeaderForAll({Y}){
     const placeDirectory = UserApp.instance.place.id||"_";
     return <header>
                 {Y>=switchY?
-                    <Topbar previous={"/store"} showCart={!UserApp.instance.hasActiveOrder} active/>:
+                    <Topbar previous={"/store"} showCart={UserApp.instance.canOrder} active/>:
 
                     <div className="topbar2" style={{
                         backgroundColor: `rgba(255,255,255,${Y/switchY})`,
                         top: -Math.max(0,Y-switchY),
                         visibility: Y<=switchY?"visible":"hidden"
                     }}>
-                        <div className="topbar-around" onClick={()=>goToPage("../")}>
+                        <div className="topbar-around" onClick={()=>goToPage("../")} style={{paddingLeft:"25px"}}>
                             <BackSVG/>
                         </div>
                         <div className="store-name-top">

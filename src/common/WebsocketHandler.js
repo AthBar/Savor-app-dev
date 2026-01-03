@@ -26,7 +26,7 @@ export class WebsocketHandler extends MyEventTarget{
         });
     }
     #setCloseEvents(){
-        this.websocket.addEventListener("close",e=>{console.log("closed")
+        this.websocket.addEventListener("close",e=>{
             if(e.code==1006){
                 console.log("WebSocket (live system) closed unexpectedly. Attempting to reconnect...", e);
                 this.#reopenLoop();

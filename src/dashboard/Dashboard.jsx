@@ -19,7 +19,7 @@ export default class Dashboard extends React.Component{
             placeLoaded:false
         };
         Dashboard.instance = this;
-        API(`/dashboard/${props.placeId}/watch`,"GET").then(r=>{
+        API(`/dashboard/${props.placeId}/permission`,"GET").then(r=>{
             if(!r.success){debugger;location.replace("/")}
         });
         API(`/place/view/${props.placeId}`,"GET").then(r=>{

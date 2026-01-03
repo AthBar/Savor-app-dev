@@ -1,10 +1,14 @@
 export function currency(price){
     return (price/100||0).toFixed(2)+"€";
 }
+console.log(process.env.TEST);
+const API_PORT = import.meta.env.VITE_API_PORT || 7288;
+const API_HOST = import.meta.env.VITE_API_HOST || location.hostname;
 
-const API_PORT = 7288;
-export const API_ORIGIN = location.protocol+"//"+location.hostname+":"+API_PORT;
-export function API(url,method="GET",body={},options={}){
+export const API_ORIGIN = location.protocol+"//"+API_HOST+":"+API_PORT;
+
+console.log(API_ORIGIN);
+export async function API(url,method="GET",body={},options={}){
     url = API_ORIGIN+url;
     if(method.trim().toUpperCase()=="GET")url += new URLSearchParams(body).toString();
 
@@ -15,9 +19,10 @@ export function API(url,method="GET",body={},options={}){
 
         initObj.headers["Content-type"] = "application/json";
     }
-    return fetch(url,initObj)
-    .then(r=>r.json())
-    .catch(e=>{
-        return Promise.reject({success:false,error:"Couldn't connect to API server"});
-    });
+    try {
+        const r = await fetch(url, initObj);
+        return await r.json();
+    } catch (e) {
+        return await Promise.reject({ success: false, error: "Couldn't connect to API server" });
+    }
 }

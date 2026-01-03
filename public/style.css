@@ -480,6 +480,8 @@ main.content-wrapper{
     border-radius: 8px;
     padding:10px;
     font-size: 1.5em;
+
+    cursor: pointer;
 }
 .order-send-button, .green-wide-button, .dish-editor-complete-button{
     background-color: hsl(145, 50%, 50%);

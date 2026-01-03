@@ -6,7 +6,6 @@ export class ListenerClientHandler extends WebsocketHandler{
     event_history=[];
     
     constructor(placeId){
-        if(ListenerClientHandler.instance instanceof ListenerClientHandler)return ListenerClientHandler.instance;
         if(!placeId.match(/^([a-zA-Z0-9_-]{36})$/g))throw new SyntaxError("Invalid place id format");
         super(`ws://${location.hostname}:7288/listener/${placeId}`);
         this.placeId=placeId;

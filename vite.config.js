@@ -8,18 +8,18 @@ import obfuscator from 'vite-plugin-obfuscator';
 export default defineConfig({
   plugins: [react()],
   build: {
-    outDir:"../app",
+    outDir:"../Savor-app",
     minify: 'terser',
     terserOptions: {
       compress: {
         passes: 2,
         drop_debugger: true,
       },
-      mangle: {
+      // mangle: {
         
-        toplevel: true,
-        reserved: ['React', 'ReactDOM', 'window', 'document'],
-      },
+      //   toplevel: true,
+      //   reserved: ['React', 'ReactDOM', 'window', 'document'],
+      // },
       format: {
         comments: false,
       },

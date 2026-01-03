@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router";
-import React, { useEffect, useRef, useState } from "react";
+import React, { createRef, useEffect, useRef, useState } from "react";
 import UserApp, { currency } from "./MainApp";
 import { PriceInput } from "../common/Form";
 
@@ -45,6 +45,7 @@ class PaymentWindow extends React.Component{
 
 export class OrderHistory extends React.Component{
     #f=()=>this.forceUpdate();
+    #scrollRef = createRef();
     constructor(props){
         super(props);
         this.state = {menu:undefined};
@@ -63,6 +64,13 @@ export class OrderHistory extends React.Component{
     componentDidMount(){
         this.#sync();
         UserApp.instance.on("session-refresh",prev=>this.#sync(prev));
+
+        const el = this.#scrollRef.current;
+        if(el)el.scrollTo(0,el.scrollHeight);
+    }
+    componentDidUpdate(){
+        const el = this.#scrollRef.current;
+        if(el)el.scrollTo(0,el.scrollHeight);
     }
     #sync(prev){
         if(prev)prev.off("change",this.#f);
@@ -90,7 +98,7 @@ export class OrderHistory extends React.Component{
         if(!this.state.menu)return <div className="history"/>
         return <div className="history">
                     <div className="history-title" style={{textAlign:"center"}}>Σύνολο: {currency(UserApp.instance.total)}</div>
-                    <div className="history-contents">
+                    <div className="history-contents" ref={this.#scrollRef}>
                         {UserApp.instance.tableSession.orders.map((u,i)=>this.OrderHistoryUnit(u,i))}
                     </div>
                 </div>
@@ -99,10 +107,10 @@ export class OrderHistory extends React.Component{
 
 function Buttons(){
     const nav = useNavigate();
-    const active = UserApp.instance.hasActiveOrder
+    const orderingOff = !UserApp.instance.canOrder;
     return  <div className="options">
-                <div className={"option"+(active?"":" animating")} onClick={()=>nav("/store/menu")}>
-                    {active?"Περιήγηση στον κατάλογο":"Παραγγελία"}
+                <div className={"option"+(orderingOff?"":" animating")} onClick={()=>nav("/store/menu")}>
+                    {orderingOff?"Περιήγηση στον κατάλογο":"Παραγγελία"}
                 </div>
                 {UserApp.instance.total<=0&&UserApp.instance.tableSession.orders.length>0?
                 <div className="option animating" onClick={()=>UserApp.instance.leave()}>
@@ -112,26 +120,34 @@ function Buttons(){
             </div>
 }
 
-export default class TablePage extends React.Component{
-    #f=()=>this.forceUpdate();
-    constructor(props){
-        super(props);
-        this.state = {
-            history:[],
-            askToPayActive:false
-        };
+function ClosedTablePage(){
+    return  <div className="content table-page">
+                <TablePageHeader/>
+                <div className="table-options">
+                    <div>
+                    <h1 style={{textAlign:"center"}}>Η επιχείρηση κλείνει</h1>
+                    <p>Μπορείτε ακόμη να περιηγηθείτε στον κατάλογο, χωρίς να στείλετε παραγγελία</p>
+                    </div>
+                    <div>
+                        <hr/>
+                        <Buttons/>
+                    </div>
+                </div>
+            </div>
+}
 
-        UserApp.instance.tableSession.on("change",this.#f);
-    }
-    componentWillUnmount(){
-        UserApp.instance.tableSession.off("change",this.#f);
-    }
-    render(){
-        const openPaymentPopup = v=>UserApp.instance.popup(<PaymentWindow/>);
+function DefaultTablePage(){
+    const [_,redraw] = useState(0);
 
-        let destination = UserApp.instance.destination;
-        return (
-            <div className="content table-page">
+    useEffect(()=>{
+        const f = ()=>redraw(_+1);
+        UserApp.instance.tableSession.on("change",f);
+        return ()=>UserApp.instance.tableSession.off("change",f);
+    },[]);
+
+    const openPaymentPopup = ()=>UserApp.instance.popup(<PaymentWindow/>);
+    let destination = UserApp.instance.destination;
+    return <div className="content table-page">
                 <TablePageHeader/>
                 <div className="table-options">
                     <div>
@@ -141,6 +157,10 @@ export default class TablePage extends React.Component{
                     <Buttons openPaymentPopup={openPaymentPopup}/>
                 </div>
             </div>
-        )
-    }
+}
+
+export default function TablePage(){
+    const orderingOff = UserApp.instance.hasActiveOrder;
+    const placeClosed = UserApp.instance.tableSession.closed;
+    return placeClosed?<ClosedTablePage/>:<DefaultTablePage/>;
 }

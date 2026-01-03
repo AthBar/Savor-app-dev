@@ -23,12 +23,13 @@ export default function(){
             width:"100px",
             userSelect:"none",
             }}></div>
-        <div style={{textAlign:"left",paddingLeft:"50px",display:"flex",justifyContent:"space-around",alignItems:"center"}}>
+        <div style={{textAlign:"left",padding:"0 50px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
             <div>{title}</div>
-            <div>
+            <div style={{display:"flex",gap:"15px"}}>
                 {document.fullscreenElement?
                 <button onClick={()=>document.exitFullscreen()}>Έξοδος από πλήρη οθόνη</button>:
                 <button onClick={()=>document.querySelector("#root")?.requestFullscreen()}>Είσοδος σε πλήρη οθόνη</button>}
+                
             </div>
         </div>
     </div>;

@@ -83,6 +83,7 @@ export default class UserApp extends EventComponent{
             destination:null,
             cart:this.#cart,
             draw:0,
+            closed:false,
             placeData:{},
             isOpen:true,
             popup:false,
@@ -124,11 +125,15 @@ export default class UserApp extends EventComponent{
         let json,str;
         try{
             json = JSON.parse(e.reason);
-            str = ["The websocket system has closed. Reason:\n"];
+            str = [`The websocket system has closed. Code: ${e.code}.Reason:\n`];
 
             switch(json.code){
-                case "not-open":
-                    str.push("- The place is not open");
+                case "ended":
+                    this.tableSession.closed = true;
+                    this.setState({closed:true});
+                    break;
+                case "not-started":
+                    str.push(" - The place is not opened");
                     break;
                 default:
                     delete json.code;
@@ -202,8 +207,6 @@ export default class UserApp extends EventComponent{
             UserApp.socket=v;
         }
     }
-    set isOpen(isOpen){this.setState({isOpen})}
-    get isOpen(){return this.state.isOpen}
     //To ease us in other files
     get destination(){return this.state.destination}
     get placeName(){return this.state.placeData.name}
@@ -258,6 +261,9 @@ export default class UserApp extends EventComponent{
     get balance(){
         return this.tableSession.balance;
     }
+    get canOrder(){
+        return !this.tableSession.closed&&!this.tableSession.activeOrder;
+    }
     sendOrder(){
         this.wsh.send({type:"send-order"});
     }
@@ -277,20 +283,18 @@ export default class UserApp extends EventComponent{
                 this.tableSession.changeInCart(msg.key,msg.newEntry);
                 break;
             case "order-sent":
-                location.replace("/store");
-                UserApp.instance.canOrder = false;
+                this.nav("/store");
                 this.tableSession.sendOrder();
                 break;
             case "order-cancelled":
-                UserApp.instance.canOrder = true;
                 this.tableSession.cancelOrder();
                 break;
             case "order-accepted":
                 this.tableSession.acceptOrder();
                 break;
             case "order-delivered":
-                UserApp.instance.canOrder = true;
                 this.tableSession.deliverOrder();
+                this.forceUpdate();
                 break;
             case "order-rejected":
                 this.tableSession.rejectOrder(msg.message);
@@ -303,10 +307,17 @@ export default class UserApp extends EventComponent{
                 break;
             case "paid":
                 this.tableSession.pay();
+                this.forceUpdate();
                 break;
             case "left":
                 this.left = true;
                 this.nav("/store/complete");
+                break;
+            case "closed":
+                this.setState({closed:true});
+                break;
+            case "opened":
+                this.setState({closed:false});
                 break;
             case "state":
                 if(!this.#placeClosedPopupOn){
@@ -323,7 +334,7 @@ export default class UserApp extends EventComponent{
     #placeClosedPopupOn;
     render(){
         if(this.left)this.nav("/store/complete");
-        if(!this.state.destination)return "Loading...";
+        if(!this.state.destination)return <div className="content-centered" style={{fontSize:"1.5em",height:"100%"}}>Φόρτωση...</div>;
         return this.state.dimensionsRight?
         [<Router key={this.sess_changes}/>,
             this.state.popup?
@@ -354,3 +365,5 @@ function makePromises(){
 export function currency(price){
     return (price/100||0).toFixed(2)+"€";
 }
+
+console.log(import.meta.env.VITE_TEST);

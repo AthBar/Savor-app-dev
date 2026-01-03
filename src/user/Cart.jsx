@@ -8,7 +8,6 @@ import IngredientSelector from "./IngredientSelector.jsx";
 function OrderItem({cart,entryKey,menu}){
     const entry = cart[entryKey];
     const dish = menu[entry.code];
-    console.log(entryKey)
     return (
         <div className="menu-item">
             <div className="item-title">

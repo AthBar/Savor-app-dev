@@ -60,26 +60,31 @@ function OrderHistoryOverview({orderList,table,setOrder}){
                 {
                     Array.isArray(orderList)&&orderList.length>0?
                     orderList.toReversed().map((r,i)=>
-                        <div key={i} className={"history-order"+(!r.accepted&&!r.rejected?" pending-order":"")} onClick={()=>setOrder(r)}>Παραγγελία {table}-{orderList.length-i} ({timeString(r.time)})</div>
+                        <div key={i} className={"history-order"+(!r.accepted&&!r.rejected?" pending-order":"")} onClick={()=>setOrder(r)}>{table}-{orderList.length-i} ({timeString(r.time)})</div>
                     ):
-                    <div className="no-orders">Καμία παραγγελία</div>
+                    <div className="no-orders content-centered">Καμία παραγγελία</div>
                 }
             </div>
 }
 export function TableSessionManager({table}){
     const [_,redraw] = useState(0);
     const [order, setOrder] = useState(null);
-    const sess = ListenerApp.instance.placeSession.getLatestTableSession(table);
-    const orderList = sess.orders;
 
-    if(sess)sess.on("change",()=>redraw(_+1),true);
     useEffect(()=>setOrder(false),[table]);
 
-    if(!table)return <div className="no-orders">Πατήστε πάνω σε ένα τραπέζι για να δείτε τις παραγγελίες του</div>;
-    else return <div className="table-session-viewer">
+    if(!table)return <div className="no-orders content-centered">Πατήστε πάνω σε ένα τραπέζι για να δείτε τις παραγγελίες του</div>;
+
+    const sess = ListenerApp.instance.placeSession.getLatestTableSession(table);
+    const orderList = sess.orders;
+    if(sess)sess.on("change",()=>redraw(_+1),true);
+
+    return <div className="table-session-viewer">
         <div className="left">
             <h2>Τραπέζι {table}</h2>
             <OrderHistoryOverview orderList={orderList} table={table} setOrder={setOrder}/>
+            <div className="bottom content-centered">
+                Συνδέσεις: {sess.connects}
+            </div>
         </div>
         <OrderViewer menu={ListenerApp.instance.menu} order={order}/>
     </div>;
@@ -205,6 +210,14 @@ export default class ListenerApp extends EventComponent{
                 this.do("waiter-change",msg);
                 this.placeSession.setWaiter(msg);
                 return;
+            case "opened":
+                this.do("state-change",false);
+                this.placeSession.open();
+                return;
+            case "closed":
+                this.do("state-change",true);
+                this.placeSession.close();
+                return;
         }
 
         const table = msg.table;
@@ -253,6 +266,10 @@ export default class ListenerApp extends EventComponent{
 
             case "paid":
                 tbl.pay();
+                break;
+            
+            case "left":
+                tbl.leave();
                 break;
             
             default:

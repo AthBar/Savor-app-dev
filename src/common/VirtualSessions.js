@@ -69,7 +69,7 @@ class Order extends Unit{
         this.do("change");
     }
     static import(tableSession,data){
-        const _this = new Order(tableSession,data.cart);
+        const _this = new Order(tableSession,data.cart,data.comments,data.timestamp);
 
         if(data.rejected)_this.rejected=true;
         if(data.accepted)_this.accepted=true;
@@ -104,7 +104,8 @@ export class TableSession extends MyEventTarget{
     orders=[];
     cart={};
     requests=[];
-    #active=true;
+    isActive = false;
+    hasStarted = false;
     total=0;
     paid=0;
     connects=0; //Number of connections. Can act as a boolean (0=false) or the number of connections currently on the session
@@ -113,14 +114,23 @@ export class TableSession extends MyEventTarget{
         this.place=place;
         this.table=table;
     }
+    leave(){
+        this.isActive = false;
+        this.do("change");
+    }
     pay(){
         this.orders.forEach(o=>o.delivered?o.pay():null);
+        this.do("change");
     }
     sendOrder(){
         const order = new Order(this,this.cart,null);
         this.orders.push(order);
         order.on("change",()=>this.do("change"));
 
+        if(!this.hasStarted){
+            this.hasStarted = true;
+            this.isActive = true;
+        }
         this.cart = {};
         this.do("change");
         return order;
@@ -162,30 +172,25 @@ export class TableSession extends MyEventTarget{
      * @returns {Order}
      */
     get activeOrder(){
+        if(this.closed)return false;
+        
         const candidate = this.orders.at(-1);
         return (candidate?.delivered||candidate?.cancelled)?null:candidate;
     }
     get canOrder(){
         return !this.activeOrder;
     }
-    connected(){
+    connected(){console.log("conn");
         this.connects++;
         this.do("change");
+        this.isActive = true;
     }
     disconnected(){
         if(this.connects>0){
             this.connects--;
             this.do("change");
         }
-    }
-    get active(){
-        return this.#active;
-    }
-    set active(v){
-        if(this.#active&&!v){
-            this.#active=false;
-            this.do("change");
-        }
+        if(this.connects<=0&&!this.hasStarted)this.isActive = false;
     }
     sync(syncData){
         const orders = [];
@@ -211,6 +216,14 @@ export class TableSession extends MyEventTarget{
     }
     static import(placeId,table,data){
         const _this = new TableSession(placeId,table);
+
+        //Case: we only receive the connection count
+        if(data.isActive==false){
+            _this.connects = data.connections;
+            return _this;
+        }
+
+        //Normal case: we receive all sync data
         const orders = [];
         for(let i of data.orders){
             const order = Order.import(_this,i);
@@ -234,6 +247,7 @@ export class TableSession extends MyEventTarget{
     }
 }
 export class PlaceSession extends MyEventTarget{
+    closed;
     placeId;
     tables={};
     waiters={};
@@ -242,6 +256,16 @@ export class PlaceSession extends MyEventTarget{
         super();
         this.placeId=placeId;
         this.#f=(...args)=>this.do("change",...args);
+    }
+    open(){
+        this.closed = false;
+        this.do("change");
+        this.do("state-change",false);
+    }
+    close(){
+        this.closed = true;
+        this.do("change");
+        this.do("state-change",true);
     }
     addWaiter(waiter){
         if(this.waiters[waiter.id] instanceof Waiter)return;
@@ -275,8 +299,10 @@ export class PlaceSession extends MyEventTarget{
         sess.on("change",this.#f);
         this.#f();
 
-        if(Array.isArray(this.tables[table]))this.tables[table].push(sess);
-        else this.tables[table] = [sess];
+        //if(table){
+            if(Array.isArray(this.tables[table]))this.tables[table].push(sess);
+            else this.tables[table] = [sess];
+        //}
         return sess;
     }
     tableDisconnect(table){
@@ -345,6 +371,7 @@ export class PlaceSession extends MyEventTarget{
             
             dest.title = src.title||false;
         }
+        _this.closed = data.closed;
         return _this;
     }
     export(){

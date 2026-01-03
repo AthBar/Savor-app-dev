@@ -1,4 +1,5 @@
 import ListenerApp, { TableSessionManager } from "./ListenerAppBase";
+import PlaceStateManager from "./PlaceStateManager";
 import WaiterManager from "./WaiterManagement";
 
 function NoFullscreen(){
@@ -32,6 +33,15 @@ export default class OwnerApp3 extends ListenerApp{
         this.#zoom = newZoom;
         this.setState({pad:this.#zoom});
     }
+    open(){
+        this.wsh.send({type:"open"});
+    }
+    close(){
+        this.wsh.send({type:"close"});
+    }
+    terminate(){
+        this.wsh.send({type:"terminate"});
+    }
     render(){
         return (
             <div className="listener-app-3">
@@ -58,7 +68,7 @@ export default class OwnerApp3 extends ListenerApp{
                     <TableSessionManager table={this.state.selectedTable}/>
                 </div>
                 <div className="listener-full-right">
-                    <NoFullscreen/>
+                    <PlaceStateManager/>
                 </div>
             </div>
         );

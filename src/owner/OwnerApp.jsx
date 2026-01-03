@@ -14,6 +14,7 @@ import LayoutEditor from "./LayoutEditor";
 import MobileApp from "./MobileApp";
 import MobileWaiterApp from "./MobileWaiterApp";
 import ClockInPrompt from "./WaiterClockInPrompt";
+import { API } from "../common/functions";
 
 const PLACE_REGEX = /^[A-Za-z0-9_-]{36}$/g;
 function OwnerRouter(){
@@ -41,12 +42,26 @@ class DashboardRouter extends React.Component{
         const {id} = useParams();
         const [_,redraw] = useState(0);
         const nav = useNavigate();
-
+        
         //Check if clocked in and if not, then make sure we are in the starter page
         const clockedIn = localStorage.getItem("clocked-in");
-        useEffect(()=>clockedIn&&location.pathname!=`/dashboard/waiter/${id}`?undefined:nav(`/dashboard/waiter/${id}`),[]);
+        const [allowed,setAllowed] = useState(clockedIn);
+        
+        useEffect(()=>{
+            //If not clocked in, check user permissions before showing the waiter app
+            if(!clockedIn){
+                if(!window.permissionPromise)window.permissionPromise=API(`/dashboard/${id}/permission`);
+                window.permissionPromise.then(r=>{console.log(r)
+                    const l = `/dashboard/waiter/${id}`;
+                    if(r.success)setAllowed(true);
+                    else if(location.pathname!=l)nav(l);
+                    else setAllowed(false); //For shits and giggles
+                });
+            }
+            else setAllowed(true);
+        },[clockedIn]);
 
-        const toShow = clockedIn?<MobileWaiterApp placeId={id}/>:<ClockInPrompt placeId={id}/>;
+        const toShow = allowed?<MobileWaiterApp placeId={id}/>:<ClockInPrompt placeId={id} after={()=>redraw(_+1)}/>;
         const match = window.matchMedia('screen and (pointer: coarse) and (orientation:landscape)');
         const shouldShowMobileApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
@@ -71,11 +86,10 @@ class DashboardRouter extends React.Component{
     _Watch(){
         const {id} = useParams();
         const [_,redraw] = useState(0);
-        const match = window.matchMedia('screen and (pointer: fine)');
+        const match = window.matchMedia('screen and (pointer: fine) and (min-width:700px)');
         const shouldShowPCApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
 
-        console.log(shouldShowPCApp)
         return shouldShowPCApp?<OwnerApp3 placeId={id}/>:<MobileApp placeId={id}/>;
     }
 }
