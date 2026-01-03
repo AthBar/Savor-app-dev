@@ -25,7 +25,7 @@ export default class OwnerApp3 extends ListenerApp{
         }
         this.wsh.on("auth-error",e=>{
             console.log("Auth error: ",e);debugger;
-            location.replace("/auth/login")
+            //location.replace("/auth/login")
         });
         OwnerApp3.instance = this;
     }
