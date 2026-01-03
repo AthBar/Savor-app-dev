@@ -13,7 +13,7 @@ export default class TableClientClientHandler extends WebsocketHandler{
         //I don't call them table ids in the code but "invalid table" would imply something else in speech
         if(!table.match(/^[a-zA-Z0-9_-]{4}$/g))throw new SyntaxError("Invalid table id format");
 
-        super(`ws://${location.hostname}:7288/table-client/${placeId}/${table}`);
+        super(`/table-client/${placeId}/${table}`);
         this.placeId = placeId;
         this.table = table;
 

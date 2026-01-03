@@ -2,10 +2,11 @@ export function currency(price){
     return (price/100||0).toFixed(2)+"€";
 }
 console.log(process.env.TEST);
-const API_PORT = import.meta.env.VITE_API_PORT || 7288;
-const API_HOST = import.meta.env.VITE_API_HOST || location.hostname;
 
-export const API_ORIGIN = location.protocol+"//"+API_HOST+":"+API_PORT;
+const API_HOST = import.meta.env.VITE_API_HOST || "api.savor.com.gr";
+const API_PROTOCOL = import.meta.env.VITE_HTTP_PROTOCOL || "http";
+
+export const API_ORIGIN = API_PROTOCOL+"://"+API_HOST;
 
 console.log(API_ORIGIN);
 export async function API(url,method="GET",body={},options={}){

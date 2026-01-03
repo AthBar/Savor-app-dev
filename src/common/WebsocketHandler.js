@@ -1,6 +1,10 @@
 
 import MyEventTarget from "./Event";
 
+const PROTOCOL = import.meta.env.VITE_WS_PROTOCOL || "ws";
+const HOST = import.meta.env.VITE_API_HOST || "api.savor.com.gr";
+const ORIGIN = PROTOCOL+"://"+HOST;
+
 export class WebsocketHandler extends MyEventTarget{
     /**
      * @type {WebSocket}
@@ -18,7 +22,7 @@ export class WebsocketHandler extends MyEventTarget{
         super();
         this.#url=url;
         this.#protocols=protocols;
-        this.websocket = new WebSocket(url,protocols);
+        this.websocket = new WebSocket(ORIGIN+url,protocols);
         this.#setCloseEvents();
         addEventListener("offline",()=>{
             this.websocket.close(4000,"Client went offline");
