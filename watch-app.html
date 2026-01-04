@@ -1,0 +1,32 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:300' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="/css/style.css"/>
+    <link rel="stylesheet" href="/css/mobile-view-app.css"/>
+    <link rel="stylesheet" href="/css/owner.css"/>
+    <link rel="stylesheet" href="/css/dashboard-style.css"/>
+    <link rel="stylesheet" href="/css/layout.css"/>
+    <link rel="stylesheet" href="/css/listener-app-3.css"/>
+    <link rel="stylesheet" href="/css/layout-editor.css"/>
+    <link rel="stylesheet" href="/css/waiter-app.css"/>
+    <link rel="stylesheet" href="/css/local-app.css"/>
+    <title>Savor</title>
+    <script type="module">
+      import RefreshRuntime from '/@react-refresh'
+        RefreshRuntime.injectIntoGlobalHook(window)
+  window.$RefreshReg$ = () => {}
+  window.$RefreshSig$ = () => (type) => type
+  window.__vite_plugin_react_preamble_installed__ = true;
+    </script>
+</head>
+<body>
+    <div id="root"></div>
+    <div id="loading-screen">Savor</div>
+    <script>
+      window.loadingElement = document.querySelector("#loading-screen");
+    </script>
+    <script type="module" src="/src/watch/main.jsx"></script>
+  </body>
+</html>

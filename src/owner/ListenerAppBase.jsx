@@ -1,6 +1,6 @@
 import React, { createRef, useEffect, useState } from "react";
 import { ListenerClientHandler } from "../common/ListenerSocket";
-import { PlaceSession, Waiter } from "../common/VirtualSessions";
+import { PlaceSession } from "../common/VirtualSessions";
 import { EventComponent } from "../common/Event";
 import { API } from "../common/functions";
 import SynchronizedLayoutSVG from "./SynchronizedLayoutSVG";
@@ -253,6 +253,7 @@ export default class ListenerApp extends EventComponent{
                 break;
 
             case "order-accepted":
+                $savor?.send("ping","accept");
                 tbl.activeOrder.accept();
                 break;
 

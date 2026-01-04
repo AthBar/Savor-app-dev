@@ -44,19 +44,19 @@ input{
     padding: 20px;
     border-top: 1px solid black;
 }
-.dashboard-page-main .place-option{
+.place-option{
     padding: 10px;
     display: grid;
     grid-template-columns: 25% 10% 1fr 5%;
     cursor: pointer;
 }
-.dashboard-page-main .place-option:not(:first-child){
+.place-option:not(:first-child){
     border-top: 1px solid black;
 }
-.dashboard-page-main .place-option :last-child{
+.place-option :last-child{
     text-align: right;
 }
-.dashboard-page-main .place-option:hover{
+.place-option:hover{
     background-color: #eee;
 }
 

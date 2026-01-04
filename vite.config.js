@@ -29,6 +29,7 @@ export default defineConfig({
         main: resolve(__dirname, "index.html"),
         user: resolve(__dirname, 'user-app.html'),
         dashboard: resolve(__dirname, 'dashboard-app.html'),
+        watch: resolve(__dirname, 'watch-app.html'),
       }
     },
   },

@@ -1,4 +1,4 @@
-import ListenerApp, { TableSessionManager } from "./ListenerAppBase";
+import ListenerApp, { TableSessionManager } from "./ListenerAppBase.jsx";
 import PlaceStateManager from "./PlaceStateManager";
 import WaiterManager from "./WaiterManagement";
 
@@ -8,6 +8,7 @@ function NoFullscreen(){
         <div><button className="green-wide-button" onClick={()=>document.querySelector("#root").requestFullscreen()}>Πλήρης οθόνη</button></div>
     </div>;
 }
+
 
 //[{code: "S002", count: 3, ingredients: ["λάχανο", "μαρούλι", "ντομάτα", "αγγούρι"]}]
 let popupOpened=false;
@@ -19,6 +20,9 @@ export default class OwnerApp3 extends ListenerApp{
     constructor(props){
         super(props);
         
+        //Load the electron overlay if detected
+        if(window.$savor)import("../watch/overlay-entry.jsx");
+
         this.state = {
             ...this.state,
             pad:this.#zoom

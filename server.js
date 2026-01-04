@@ -22,6 +22,7 @@ app.use((req,res,next)=>{
         matchURL(req.url,res,'dashboard-app.html',"dashboard")||
         matchURL(req.url,res,'user-app.html',"store")||
         matchURL(req.url,res,'place-app.html',"place")||
+        matchURL(req.url,res,'watch-app.html',"watch")||
         next()
     );
 });

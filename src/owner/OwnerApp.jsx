@@ -1,10 +1,7 @@
 import MyEventTarget, { EventComponent } from "../common/Event";
-import { ListenerClientHandler } from "../common/ListenerSocket";
 import { Route, Routes, useNavigate, useParams } from "react-router";
 import OwnerApp2 from "./App2";
 import LayoutSVG from "./LayoutSVG";
-import LayoutDesigner from "./LayoutDesigner";
-import { PlaceSession } from "../common/VirtualSessions";
 import PlaceSelection from "../dashboard/PlaceSelection";
 import DashboardTopbar from "../dashboard/DashboardTopbar";
 import Dashboard from "../dashboard/Dashboard";

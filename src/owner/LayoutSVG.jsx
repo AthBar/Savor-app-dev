@@ -1,7 +1,5 @@
-import React, { createRef, useEffect, useRef, useState } from "react";
-import OwnerApp from "./OwnerApp";
-import OwnerApp2 from "./App2";
-import MyEventTarget, { EventComponent } from "../common/Event";
+import { createRef } from "react";
+import { EventComponent } from "../common/Event";
 import { API } from "../common/functions";
 export const TABLE_REGEX = /^[A-Za-z0-9_-]{4}$/g; //I need to organize ts
 

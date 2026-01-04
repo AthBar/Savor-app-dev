@@ -1,5 +1,5 @@
 *{box-sizing: border-box}
-*,input{font-family: sans-serif;}
+*,input{font-family: sans-serif;scrollbar-width: thin;}
 html,body{
     margin: 0;
     height:100%;
