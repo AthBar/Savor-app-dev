@@ -25,7 +25,7 @@ export default function LoginPage(){
             
             <div className="form-main">
                 <div className="label">Email</div>
-                <input type="email" name="email" value={window.$savor?"thanasisbartzokas@gmail.com":""}></input>
+                <input type="email" name="email" defaultValue={window.$savor?"thanasisbartzokas@gmail.com":""}></input>
                 <div className="label">Password</div>
                 <input type="password" name="password"></input>
                 <div style={{textAlign:"center",gridColumn:"1/3"}}>
