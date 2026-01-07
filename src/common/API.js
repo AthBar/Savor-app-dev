@@ -7,7 +7,6 @@ const API_PROTOCOL = import.meta.env.VITE_HTTP_PROTOCOL || "http";
 
 export const API_ORIGIN = API_PROTOCOL+"://"+API_HOST;
 
-console.log(API_ORIGIN);
 export async function API(url,method="GET",body={},options={}){
     url = API_ORIGIN+url;
     if(method.trim().toUpperCase()=="GET")url += new URLSearchParams(body).toString();
@@ -20,9 +19,8 @@ export async function API(url,method="GET",body={},options={}){
         initObj.headers["Content-type"] = "application/json";
     }
     try {
-        const r = await fetch(url, initObj);
-        return await r.json();
-    } catch (e) {
+        return fetch(url, initObj).then(r=>r.json());
+    } catch (e) {console.log("error")
         return await Promise.reject({ success: false, error: "Couldn't connect to API server" });
     }
 }

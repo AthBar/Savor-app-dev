@@ -1,5 +1,5 @@
 import React from "react"
-import { API, API_ORIGIN } from "../common/functions"
+import { API, API_ORIGIN } from "../common/API"
 
 function Button({children}){
   return <button className="button">{children}</button>

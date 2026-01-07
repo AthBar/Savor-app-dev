@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import OwnerApp from "../owner/OwnerApp";
 import Dashboard from "./Dashboard";
 import DashboardTab from "./DashboardTab";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 import { PriceInput } from "../common/Form";
 
 function TitleInput({title,className,onBeforeChange,onChange,onBlur,placeholder}){

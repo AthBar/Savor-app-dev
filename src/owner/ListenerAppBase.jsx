@@ -2,7 +2,7 @@ import React, { createRef, useEffect, useState } from "react";
 import { ListenerClientHandler } from "../common/ListenerSocket";
 import { PlaceSession } from "../common/VirtualSessions";
 import { EventComponent } from "../common/Event";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 import SynchronizedLayoutSVG from "./SynchronizedLayoutSVG";
 
 function OrderOverviewDish({dish}){
@@ -96,6 +96,9 @@ export default class ListenerApp extends EventComponent{
     place;
     
     wsh;
+    /**
+     * @type {PlaceSession}
+     */
     placeSession;
     sess_changes = 0;
 
@@ -202,6 +205,10 @@ export default class ListenerApp extends EventComponent{
     rejectOrder(table,message){
         return this.wsh.send({type:"reject-order",table,message})
     }
+    serializeOrder(order){
+        console.log(order)
+        return "hehe";
+    }
     #onWSMessage(msg){
         //Do all types that don't require table first
         switch(msg.type){
@@ -217,6 +224,10 @@ export default class ListenerApp extends EventComponent{
             case "closed":
                 this.do("state-change",true);
                 this.placeSession.close();
+                return;
+            case "terminated":
+                this.do("terminated");
+                this.placeSession.terminate();
                 return;
         }
 
@@ -253,7 +264,7 @@ export default class ListenerApp extends EventComponent{
                 break;
 
             case "order-accepted":
-                $savor?.send("ping","accept");
+                window?.$savor?.send?.("ping",this.serializeOrder(tbl.activeOrder));
                 tbl.activeOrder.accept();
                 break;
 

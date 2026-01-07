@@ -141,6 +141,7 @@ function DefaultTablePage(){
 
     useEffect(()=>{
         const f = ()=>redraw(_+1);
+        console.log(UserApp.instance.tableSession);
         UserApp.instance.tableSession.on("change",f);
         return ()=>UserApp.instance.tableSession.off("change",f);
     },[]);
@@ -159,7 +160,7 @@ function DefaultTablePage(){
             </div>
 }
 
-export default function TablePage(){
+export default function TablePage(){console.log("update")
     const orderingOff = UserApp.instance.hasActiveOrder;
     const placeClosed = UserApp.instance.tableSession.closed;
     return placeClosed?<ClosedTablePage/>:<DefaultTablePage/>;

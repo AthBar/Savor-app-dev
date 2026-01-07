@@ -1,7 +1,7 @@
 import React, { createRef } from "react";
 import DashboardTab from "./DashboardTab";
 import Dashboard from "./Dashboard";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 
 class DishSelectionTable extends React.Component{
     master;

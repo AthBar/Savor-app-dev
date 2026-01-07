@@ -3,7 +3,7 @@ import LayoutSVG from "./LayoutSVG";
 import { ListenerClientHandler } from "../common/ListenerSocket";
 import { PlaceSession } from "../common/VirtualSessions";
 import { EventComponent } from "../common/Event";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 import OwnerApp from "./OwnerApp";
 
 function OrderOverviewDish({dish}){console.log(dish)

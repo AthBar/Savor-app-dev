@@ -26,11 +26,12 @@ input{
     text-align: center;
 }
 .place-selector{
-    margin-top: 50px;
+    justify-self: center;
+    width: max(50%, 750px);
+    border: 1px solid;
 }
 .place-selector .selector-head{
     text-align: center;
-    border-top: 1px solid black;
     border-bottom: 1px solid black;
     padding: 20px;
     font-size: 1.5em;
@@ -47,8 +48,14 @@ input{
 .place-option{
     padding: 10px;
     display: grid;
-    grid-template-columns: 25% 10% 1fr 5%;
+    grid-template-columns: 25% 1fr 1fr 5%;
     cursor: pointer;
+    align-items: center;
+}
+.place-option > :first-child{
+    text-align: center;
+    font-size: 1.5em;
+    font-weight: bold;
 }
 .place-option:not(:first-child){
     border-top: 1px solid black;

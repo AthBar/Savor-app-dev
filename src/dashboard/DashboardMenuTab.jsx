@@ -1,4 +1,4 @@
-import { API } from "../common/functions";
+import { API } from "../common/API";
 import DashboardTab from "./DashboardTab";
 
 export default class DashboardMenuTab extends DashboardTab{

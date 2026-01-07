@@ -1,6 +1,6 @@
 import { createRef } from "react";
 import { EventComponent } from "../common/Event";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 export const TABLE_REGEX = /^[A-Za-z0-9_-]{4}$/g; //I need to organize ts
 
 /**

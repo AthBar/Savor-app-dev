@@ -102,7 +102,7 @@ export default class IngredientSelector extends React.Component{
                     <div className="ingredient-list">
                         {this.state.dish.ingredients.map(r=>r.nonRemovable?null:
                             <div className="ingredient" key={r.title} onClick={()=>this.toggle(r.title)}>
-                                <input type="checkbox" checked={!!this.state.selections[r.title]}></input>
+                                <input type="checkbox" checked={!!this.state.selections[r.title]} onChange={()=>false}></input>
                                 <div>{this.capFirst(r.title)}</div>
                                 {r.price?
                                     <span className="extra-price">

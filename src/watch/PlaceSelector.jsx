@@ -1,26 +1,37 @@
-import { useEffect, useState } from "react";
-import { API } from "../common/functions";
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
+import { API } from "../common/API";
 
-function PlaceEntry({data}){
+function PlaceOption({data}){
     const nav = useNavigate();
-    return <div className="place-option" onClick={()=>location.assign(`${data.id}`)}>
+    return <div className="place-option" onClick={()=>nav(`/watch/${data.id}`)}>
         <div className="name">{data.name}</div>
         <div className="location">Ν.Αγχίαλος</div>
-        <div>Ανοιχτή</div>
+        <div>{data.hasSession?"Ενρργή":"Ανενεργή"}</div>
         <div>end</div>
     </div>;
 }
 
-let placeListQuery;
-export default function PlaceSelector(){
-    const [placeList, setPlaceList] = useState([]);
+export default function PlaceSelection(){
+    const [list,setList] = useState(null);
+    
+    useEffect(()=>{
+        API("/dashboard/places").then(l=>{
+            if(l.success)setList(l.data);
+            else debugger;
+        },()=>{debugger});
+    },[]);
+    if(!list)return "Loading...";
 
-    useEffect(()=>{(placeListQuery?placeListQuery:placeListQuery=API("/dashboard/places"))
-        .then(r=>setPlaceList(r.data))}
-    ,[]);
-
-    return  <div className="place-selector">{placeList.map((r,i)=>
-                <PlaceEntry key={i} data={r}/>
-          )}</div>
+    return <div className="place-selector fixed-centered">
+                <div className="selector-head">
+                    Επιλογή επιχείρησης για προβολή
+                </div>
+                <div className="selector-options">
+                    {list.map((c,i)=><PlaceOption key={i} data={c}/>)}
+                </div>
+                <div className="selector-footer">
+                    Σύνολο: {list.length==1?"1 επιχείρηση":`${list.length} επιχειρήσεις`}
+                </div>
+            </div>;
 }

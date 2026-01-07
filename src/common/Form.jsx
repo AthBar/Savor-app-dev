@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { currency } from "./functions";
+import { currency } from "./API";
 
 export function PriceInput({price,onChange,onBlur,onValueChanged,...props}){
     const onchange = e=>{

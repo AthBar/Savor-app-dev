@@ -79,6 +79,9 @@ class Order extends Unit{
 
         return _this;
     }
+    get running(){
+        return !this.cancelled&&!this.rejected&&!this.delivered;
+    }
     export(){
         const obj = {
             cart:this.cart,
@@ -158,7 +161,7 @@ export class TableSession extends MyEventTarget{
         this.do("change");
     }
     rejectOrder(){
-        if(!this.orders.at(-1).delivered)this.orders.at(-1).rejected = true;
+        this.orders.at(-1).rejected = true;
         this.do("change");
     }
     deliverOrder(){
@@ -175,7 +178,7 @@ export class TableSession extends MyEventTarget{
         if(this.closed)return false;
         
         const candidate = this.orders.at(-1);
-        return (candidate?.delivered||candidate?.cancelled)?null:candidate;
+        return candidate?.running?candidate:false;
     }
     get canOrder(){
         return !this.activeOrder;
@@ -222,6 +225,7 @@ export class TableSession extends MyEventTarget{
             _this.connects = data.connections;
             return _this;
         }
+        else _this.isActive = true;
 
         //Normal case: we receive all sync data
         const orders = [];

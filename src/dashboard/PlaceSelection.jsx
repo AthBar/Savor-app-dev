@@ -1,13 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 
 function PlaceOption({data}){
     const nav = useNavigate();
     return <div className="place-option" onClick={()=>location.assign(`/dashboard/${data.id}`)}>
         <div className="name">{data.name}</div>
         <div className="location">Ν.Αγχίαλος</div>
-        <div>Ανοιχτή</div>
+        <div></div>
         <div>end</div>
     </div>;
 }

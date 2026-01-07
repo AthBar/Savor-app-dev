@@ -11,7 +11,7 @@ import LayoutEditor from "./LayoutEditor";
 import MobileApp from "./MobileApp";
 import MobileWaiterApp from "./MobileWaiterApp";
 import ClockInPrompt from "./WaiterClockInPrompt";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 
 const PLACE_REGEX = /^[A-Za-z0-9_-]{36}$/g;
 function OwnerRouter(){

@@ -1,17 +1,13 @@
 import { createContext, useContext } from "react";
 import { useState } from "react"
+import POSPrinterSettings from "./PrinterSettings";
 
 const OverlayContext = createContext();
 
 function SettingsMain(){
     
     return <div>
-        <div>
-            <h1>Εκτύπωση</h1>
-            <div>
-                <select></select>
-            </div>
-        </div>
+        <POSPrinterSettings/>
     </div>;
     //return [...Array(100)].map((r,i)=><div>Row {i}</div>)
 }
@@ -22,8 +18,8 @@ function SettingsPopup(){
     return <div className="container settings-page">
         <div>
             <img src="/images/logo.svg" style={{height:"150px",pointerEvents:"none"}}/><br/>
-            Χρησιμοποιείτε το Savor Desktop™ v1 <br/>
-            <sub>©2026 Μπαρτζώκας Αθανάσιος</sub>
+            Χρησιμοποιείτε το Savor Desktop™ v{$savor.version} <br/>
+            <sub>© {$savor.copyright}</sub>
             <hr/>
         </div>
         <div className="y-scrollable elegant-scrollbar">
@@ -56,6 +52,10 @@ export default function Overlay(){
         </div>
     }
 
+    if(!window.$savor)return (
+    <div className="fixed-centered" style={{fontSize:"1.5em"}}>
+        Δεν βρέθηκε η παγκόσμιο μεταβλητή window.$savor. Δεν είναι δυνατή η φόρτωση των εργαλείων της εφαρμογής
+    </div>);
     return  <OverlayContext.Provider value={{setPopup}}>
                 {popup?<PopupCover key="popup"/>:
                 <div className="overlay container bottom right hoverable" key="settings-button">

@@ -17,23 +17,30 @@ export default class SynchronizedLayoutSVG extends LayoutSVG{
         for(let table of Object.keys(list)){
             const sess = list[table].at(-1);
             const lastOrder = sess.orders.at(-1);
-            const black = sess.connects>0?"#222":"gray";
-            let startColor = black, endColor=black;
+            let black = sess.connects>0?"#555":"gray";
+            let startColor = black;
+            let endColor=black;
+
+            //If connected but no orders, make a blinking black
+            if(sess.connects>0&&!sess.isActive)startColor = "gray";
 
             if(lastOrder){
+                //If rejected, make a static red
                 if(lastOrder.rejected){
-                    startColor = endColor = "#800";
+                    console.log("Rej");
+                    startColor = endColor = "#600";
                 }
-                if(!lastOrder.accepted){
+                //If not yet accepted, make a blinking red
+                else if(!lastOrder.accepted){
                     endColor = "#a00";
                 }
+                //If accepted but not delivered, make a static yellow
                 else if(!lastOrder.delivered){
-                    this.tableColor(table,"#dd0");
-                    continue;
+                    startColor = endColor = "#080";
                 }
-            }
-            if(sess.connects>0){
-                this.tableColor(table,"gray");
+                if(lastOrder.paid){
+                    startColor = endColor = "#880";
+                }
             }
             this.tableColor(table,startColor,endColor);
         }

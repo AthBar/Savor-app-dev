@@ -8,7 +8,7 @@ import TestPage from './TestPage.jsx';
 import TableClientClientHandler from '../common/TableClientSocket.js';
 import React from 'react';
 import { TableSession } from "../common/VirtualSessions.js";
-import { API } from "../common/functions.js";
+import { API } from "../common/API.js";
 import { EventComponent } from "../common/Event.js";
 import GoodbyePage from "./GoodbyePage.jsx";
 
@@ -101,6 +101,7 @@ export default class UserApp extends EventComponent{
             this.setState({destination});
 
             this.tableSession = new TableSession(destination.place,destination.table);
+            this.tableSession.on("change",()=>this.forceUpdate());
         });
         UserApp.menuPromise.then(menuData=>{
             const menu = {};
@@ -164,6 +165,8 @@ export default class UserApp extends EventComponent{
         const prev = this.tableSession;
 
         this.tableSession = TableSession.import(dest.place.id,dest.table,this.wsh.syncData);
+        this.tableSession.on("change",()=>this.forceUpdate());
+
         this.do("session-refresh",prev);
         this.sess_changes++;
 
@@ -294,7 +297,6 @@ export default class UserApp extends EventComponent{
                 break;
             case "order-delivered":
                 this.tableSession.deliverOrder();
-                this.forceUpdate();
                 break;
             case "order-rejected":
                 this.tableSession.rejectOrder(msg.message);
@@ -307,7 +309,6 @@ export default class UserApp extends EventComponent{
                 break;
             case "paid":
                 this.tableSession.pay();
-                this.forceUpdate();
                 break;
             case "left":
                 this.left = true;

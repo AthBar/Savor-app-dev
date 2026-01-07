@@ -1,8 +1,9 @@
 import { Route, Routes, useNavigate, useParams } from "react-router";
 import ListenerApp from "./ListenerAppBase";
 import { useEffect, useState } from "react";
-import { API, currency } from "../common/functions";
+import { API, currency } from "../common/API";
 import { Waiter } from "../common/VirtualSessions";
+import { TimeSince, unixToTimeString } from "../common/TimeComponents";
 
 function MenuDishOptions({dish,category,table,onSubmit,...props}){
     const nav = useNavigate();
@@ -178,24 +179,7 @@ function Overview(){
             </div>
         </div>
 }
-function TimeSince({startDate}){
-    const [_,redraw] = useState(0);
-    useEffect(()=>{
-        const id = setTimeout(()=>redraw(_+1),1000);
-        return ()=>clearTimeout(id);
-    });
-    const now = Date.now();
-    const diff = now - startDate;
-    
-    const seconds = Math.floor(diff/1000);
-    const minutes = Math.floor(seconds/60);
-    const hours = Math.floor(minutes/60);
 
-    const hstr = hours?hours.toString().padStart(2,"0")+":":"";
-    const mstr = (minutes%60).toString().padStart(2,"0")+":";
-    const sstr = (seconds%60).toString().padStart(2,"0");
-    return hstr+mstr+sstr;
-}
 
 function ProfilePage(){
     const [_,redraw] = useState(0);
@@ -209,12 +193,6 @@ function ProfilePage(){
     },[]);
     useEffect(()=>window.topbar.setTitle(""))
 
-    function unixToTimeString(unix){
-        const date = new Date(unix);
-        const hours = date.getHours().toString().padStart(2,"0");
-        const minutes = date.getMinutes().toString().padStart(2,"0");
-        return `${hours}:${minutes}`;
-    }
     let clockInTime = 0;
 
     try{

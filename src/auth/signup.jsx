@@ -1,5 +1,5 @@
 import React, { createRef } from "react";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 
 export default class SignupPage extends React.Component{
     #a=createRef();
@@ -31,5 +31,3 @@ export default class SignupPage extends React.Component{
         return API("/auth/signup","POST",{email,password}).then(console.log)
     }
 }
-
-window.LoginPage = LoginPage;

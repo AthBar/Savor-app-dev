@@ -3,7 +3,7 @@
 import React from "react";
 import DashboardMainTabRouter from "./DashboardMainTabRouter";
 import DashboardSidebar from "./DashboardSidebar";
-import { API } from "../common/functions";
+import { API } from "../common/API";
 
 export default class Dashboard extends React.Component{
     //Keep this here for other elements to access from within

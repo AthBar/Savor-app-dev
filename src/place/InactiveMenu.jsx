@@ -1,4 +1,4 @@
-import { currency } from "../common/functions";
+import { currency } from "../common/API";
 
 
 export default function InactiveMenuComponent({menu}){
