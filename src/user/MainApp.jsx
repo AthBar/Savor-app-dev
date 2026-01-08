@@ -339,11 +339,11 @@ export default class UserApp extends EventComponent{
         return this.state.dimensionsRight?
         [<Router key={this.sess_changes}/>,
             this.state.popup?
-                    <div key="popup" className="popup-background" onMouseDown={e=>this.onClick(e)}>
-                        <div className="popup-wrapper">
-                            {this.state.popup}
-                        </div>
-                    </div>
+            <div key="popup" className="popup-background" onMouseDown={e=>this.onClick(e)}>
+                <div className="popup-wrapper">
+                    {this.state.popup}
+                </div>
+            </div>
             :null
         ]
         :<Disabled/>;

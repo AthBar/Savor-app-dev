@@ -26,16 +26,19 @@ export class WebsocketHandler extends MyEventTarget{
         this.#setCloseEvents();
         addEventListener("offline",()=>{
             this.websocket.close(4000,"Client went offline");
+            
             addEventListener("online",()=>this.reopenLoop(),{once:true})
         });
     }
     #setCloseEvents(){
         this.websocket.addEventListener("close",e=>{
+            this.do("close",e);
             if(e.code==1006){
                 console.log("WebSocket (live system) closed unexpectedly. Attempting to reconnect...", e);
                 this.reopenLoop();
             }
             else if(e.code==4000){
+                this.do("offline",e);
                 console.log("WebSocket (live system) closed due to client going offline. Waiting for connection to reconnect...");
             }
             else if(!this.#ready){
@@ -50,6 +53,7 @@ export class WebsocketHandler extends MyEventTarget{
                 catch(e){
                     console.warn("Αποβολή WebSocket από τον server (1008) με non-JSON response. Αυτό δεν θα έπρεπε να συμβεί. Παρακαλώ ενημερώστε την υποστήριξη")
                 }
+                this.do("kicked",e);
             }
             else{
                 console.warn("WebSocket closed with unknown close frame. Please notify support: ",e);
@@ -62,13 +66,18 @@ export class WebsocketHandler extends MyEventTarget{
     async reopenLoop(){
         console.log("Attempting to reconnect WebSocket (live system)...");
 
+        this.do("reconnecting");
+        this.do("connecting");
+
         return this.reopen()
         .then(e=>{
             this.#reopens = 0;
             this.#setCloseEvents();
+            this.do("connected");
             this._handshake();
             console.log("WebSocket (live system) reconnected successfully");
         },()=>{
+            this.do("reconnect-failed");
             const nextDelay = Math.min((2**this.#reopens),30);
             console.log(`Couldn't connect to WebSocket server. Attempting a reconnect in ${nextDelay} seconds`);
             setTimeout(()=>this.reopenLoop(),nextDelay*1000);

@@ -225,9 +225,8 @@ export default class ListenerApp extends EventComponent{
                 this.do("state-change",true);
                 this.placeSession.close();
                 return;
-            case "terminated":
+            case "terminated":console.log("Terminated")
                 this.do("terminated");
-                this.placeSession.terminate();
                 return;
         }
 

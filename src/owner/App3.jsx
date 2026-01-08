@@ -1,3 +1,4 @@
+import { ConnectionStateVisualizer } from "../common/WshVisuals.jsx";
 import ListenerApp, { TableSessionManager } from "./ListenerAppBase.jsx";
 import PlaceStateManager from "./PlaceStateManager";
 import WaiterManager from "./WaiterManagement";
@@ -9,6 +10,19 @@ function NoFullscreen(){
     </div>;
 }
 
+function PostTerminationPopup(){
+    const app = OwnerApp3.instance;
+    const data = app.placeSession.export();
+    return <div className="big-container">
+        <h2 style={{textAlign:"center"}}>Τερματισμός λειτουργίας επιχείρησης</h2>
+        <hr/>
+        <p>Η λειτουργία της επιχείρησής σας τερματίστηκε. 
+            Αυτό σημαίνει ότι δεν μπορούν πλέον οι πελάτες σας να συνδεθούν στον κατάλογό σας, 
+            τα μέλη του προσωπικού σας αποσυνδέθηκαν, όπως και οποιαδήποτε συσκευή στο δίκτυο.
+        </p>
+        {JSON.stringify({placeId:app.placeId})}
+    </div>
+}
 
 //[{code: "S002", count: 3, ingredients: ["λάχανο", "μαρούλι", "ντομάτα", "αγγούρι"]}]
 let popupOpened=false;
@@ -31,7 +45,14 @@ export default class OwnerApp3 extends ListenerApp{
             console.log("Auth error: ",e);debugger;
             //location.replace("/auth/login")
         });
+        this.on("terminated",this.onTerminate);
         OwnerApp3.instance = this;
+    }
+    componentWillUnmount(){
+        this.off("terminated",this.onTerminate);
+    }
+    onTerminate(){console.log("termination")
+        window.popup(<PostTerminationPopup/>);
     }
     zoom(dY){
         const newZoom = this.#zoom+dY;
@@ -52,6 +73,7 @@ export default class OwnerApp3 extends ListenerApp{
     render(){
         return (
             <div className="listener-app-3">
+                <ConnectionStateVisualizer wsh={this.wsh}/>
                 <div className="listener-layout-view listener-top-center" style={{padding:`0 ${this.state.pad}%`}} onWheel={e=>this.zoom(e.deltaY*this.zoomSensitivity/100)}>
                     <div className="layout-edit-btn-wrapper">
                         <a href={`/dashboard/${this.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>

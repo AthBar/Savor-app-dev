@@ -1,6 +1,7 @@
 import { createContext, useContext } from "react";
 import { useState } from "react"
 import POSPrinterSettings from "./PrinterSettings";
+import { ConnectionStateVisualizer } from "../common/WshVisuals";
 
 const OverlayContext = createContext();
 

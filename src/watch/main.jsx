@@ -1,11 +1,10 @@
 import { createRoot } from 'react-dom/client';
 import { BrowserRouter, Route, Routes, useParams } from "react-router";
-import OwnerApp3 from '../owner/App3.jsx';
-import PlaceSelection from '../dashboard/PlaceSelection.jsx';
 import PlaceSelector from './PlaceSelector.jsx';
 import { useEffect, useState } from 'react';
 import { API } from '../common/API.js';
 import SessionStarter from './SessionStarter.jsx';
+import WatchApp from './WatchPage.jsx';
 
 function _WatchApp(){
     const [exists, setExists] = useState(null);
@@ -18,7 +17,7 @@ function _WatchApp(){
 
     if(exists==null)return <div className="content-centered">Loading...</div>;
 
-    return exists?<OwnerApp3 placeId={placeId}/>:<SessionStarter placeId={placeId} setExists={setExists}/>;
+    return exists?<WatchApp placeId={placeId}/>:<SessionStarter placeId={placeId} setExists={setExists}/>;
 }
 
 const ROOT = createRoot(document.querySelector("div#root"));

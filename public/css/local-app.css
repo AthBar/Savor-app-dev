@@ -3,12 +3,16 @@
     background-color: rgba(0,0,0,var(--opacity));
     position: fixed;
 }
-.container{
+.container,.big-container{
     --bg: white;
     padding: 5px;
     border-radius: 12px;
     border: 1px solid;
     background-color: var(--bg);
+}
+.big-container{
+    padding: 15px;
+    width: max(500px,50vw);
 }
 .overlay{
     --margin: 15px;

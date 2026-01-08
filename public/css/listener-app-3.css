@@ -222,7 +222,7 @@
     height:75px;
     font-size: 3em;
 }
-.waiter-instance:not(:has(.green-wide-button)){
+.waiter-instance:not(:has(button:only-child)){
     border: 1px solid;
     border-radius: 8px;
     padding: 10px;
