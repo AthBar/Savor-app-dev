@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router";
 import { ConnectionStateVisualizer } from "../common/WshVisuals.jsx";
 import ListenerApp, { TableSessionManager } from "./ListenerAppBase.jsx";
 import PlaceStateManager from "./PlaceStateManager";
@@ -10,9 +11,20 @@ function NoFullscreen(){
     </div>;
 }
 
+function InvalidClosurePopup({e}){
+    return <div className="big-container">
+        <h2 style={{textAlign:"center"}}>Αναπάντεχη αποσύνδεση</h2>
+        <hr/>
+        <p>
+            Η σύνδεσή σας με το Savor τερματίστηκε αναπάντεχα.<br/>
+            Ακολουθούν οι πληροφορίες αποσύνδεσης:
+            <span style={{padding:"5px",background:"#ddd"}}>{e.code}:{e.reason}</span>
+        </p>
+        {JSON.stringify({placeId:app.placeId})}
+    </div>
+}
+
 function PostTerminationPopup(){
-    const app = OwnerApp3.instance;
-    const data = app.placeSession.export();
     return <div className="big-container">
         <h2 style={{textAlign:"center"}}>Τερματισμός λειτουργίας επιχείρησης</h2>
         <hr/>
@@ -20,7 +32,9 @@ function PostTerminationPopup(){
             Αυτό σημαίνει ότι δεν μπορούν πλέον οι πελάτες σας να συνδεθούν στον κατάλογό σας, 
             τα μέλη του προσωπικού σας αποσυνδέθηκαν, όπως και οποιαδήποτε συσκευή στο δίκτυο.
         </p>
-        {JSON.stringify({placeId:app.placeId})}
+        <p style={{textAlign:"center"}}>Ευχόμαστε να τα ξαναπούμε σύντομα!</p>
+        <hr/>
+        <button className="green-wide-button" onClick={()=>location.assign("/watch")}>Πίσω στην σελίδα παρακολούθησης</button>
     </div>
 }
 
@@ -29,6 +43,7 @@ let popupOpened=false;
 export default class OwnerApp3 extends ListenerApp{
     #zoom=5;
     zoomSensitivity = 1;
+    #f=e=>this.onClose(e);
     
     static instance;
     constructor(props){
@@ -45,14 +60,22 @@ export default class OwnerApp3 extends ListenerApp{
             console.log("Auth error: ",e);debugger;
             //location.replace("/auth/login")
         });
-        this.on("terminated",this.onTerminate);
+        this.wsh.on("close",this.#f);
         OwnerApp3.instance = this;
     }
     componentWillUnmount(){
-        this.off("terminated",this.onTerminate);
+        this.off("terminated",this.#f);
     }
-    onTerminate(){console.log("termination")
-        window.popup(<PostTerminationPopup/>);
+    _PostTerminationPopup(){
+        return <PostTerminationPopup nav={nav}/>
+    }
+    onClose(e){
+        if(e.reason=="terminated"){
+            
+            window.popup(<PostTerminationPopup/>,"terminated",true);
+            ConnectionStateVisualizer.disable();
+        }
+        else window.popup(<InvalidClosurePopup e={e}/>);
     }
     zoom(dY){
         const newZoom = this.#zoom+dY;

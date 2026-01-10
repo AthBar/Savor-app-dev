@@ -141,13 +141,18 @@ input[type=number]:not(.buttons-on)::-webkit-outer-spin-button {
 .table-topbar{
     width: 100%;
     z-index: 2;
+    padding-top: 10px;
+    height: 90px;
+    box-shadow: 0 0 15px 10px rgba(0,0,0,0.1);
+    border-bottom: 1px solid black;
+
+    display: flex;
+    justify-content: center;
+}
+.place-title{
     text-align: center;
     font-size: 2em;
     font-family: 'Times new Roman';
-    padding: 20px;
-    height: 80px;
-    box-shadow: 0 0 15px 10px rgba(0,0,0,0.1);
-    border-bottom: 1px solid black;
 }
 .table-viewer{
     height:250px;

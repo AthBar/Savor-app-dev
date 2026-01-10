@@ -1,9 +1,23 @@
 import { useEffect } from "react";
 import { useState } from "react";
 
+function PrinterOption({IP}){
+    function select(){
+        window.$savor.send("printer-select",IP);
+    }
+    return <div className="printer-option" style={{padding:"8px",border:"1px solid"}}>
+                <div>{IP.toString()}</div>
+                <div>
+                    <button>Test Print</button>
+                </div>
+                <div>
+                    <button onClick={select}>Επιλογή</button>
+                </div>
+            </div>
+}
 
 export default function POSPrinterSettings(){
-    const [port,setPort] = useState(9100);
+    const port = 80;
     const [ips,setIps] = useState([]);
 
     useEffect(()=>{
@@ -17,11 +31,10 @@ export default function POSPrinterSettings(){
     return  <div>
                 <h1>Εκτύπωση</h1>
                 <div>
-                    Port: <input type="number" onChange={e=>setPort(Number(e.target.value))} value={port}/>
-                    <button onClick={performIPScan}>Scan subnet</button>
+                    <button onClick={performIPScan}>Αναζήτηση για εκτυπωτές</button>
                     <h2>Έγκυρες τοπικές IP:</h2>
-                    <div>
-                        {ips.map((r,i)=><div key={i}>{r.toString()}</div>)}
+                    <div className="printer-list">
+                        {ips.map((r,i)=><PrinterOption key={i} IP={r}/>)}
                     </div>
                 </div>
             </div>;

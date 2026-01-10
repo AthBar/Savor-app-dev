@@ -80,7 +80,7 @@ export default class UserApp extends EventComponent{
         this.state={
             dimensionsRight: media.matches,
             menu:null,
-            destination:null,
+            destination:props.destination,
             cart:this.#cart,
             draw:0,
             closed:false,
@@ -91,33 +91,31 @@ export default class UserApp extends EventComponent{
         }
         media.addEventListener("change", e=>this.dimensionsRight=e.matches);
 
-        makePromises();
+        const {destination} = props;
+        if(!destination.success)return location.replace("/");
 
-        UserApp.destinationPromise.then(destination=>{
-            if(!destination.success)return location.replace("/");
+        this.place = window.place = {id:destination.placeId};
 
-            this.place = window.place = {id:destination.place};
-            UserApp.menuPromise = API(`/place/menu/${destination.place}`).then(r=>r.data)
-            this.setState({destination});
+        this.tableSession = new TableSession(destination.placeId,destination.table);
+        this.tableSession.on("change",()=>this.forceUpdate());
 
-            this.tableSession = new TableSession(destination.place,destination.table);
-            this.tableSession.on("change",()=>this.forceUpdate());
-        });
-        UserApp.menuPromise.then(menuData=>{
+        UserApp.menuPromise = API(`/place/menu/${destination.placeId}`).then(menuData=>{
             const menu = {};
-            for(let i of menuData)menu[i.code]=i;
+            for(let i of menuData.data)menu[i.code]=i;
             this.menu = menu;
-        });
-        UserApp.placePromise.then(placeData=>{
-            this.setState({placeData});
-            UserApp.instance.place.name = placeData.name;
-        });
 
-        Promise.all([UserApp.destinationPromise, UserApp.menuPromise]).then(([destination])=>{
-            this.wsh = new TableClientClientHandler(destination.place,destination.table);
+            this.wsh = new TableClientClientHandler(destination.placeId,destination.table);
             this.wsh.on("handshake-rejected",e=>this.#handleRejection(e));
             this.wsh.on("handshake-finished",()=>this.#sync());
             this.wsh.on("message",m=>this.#onWshMessage(m));
+
+            return menuData.data;
+        });
+
+        UserApp.placePromise = API(`/place/basic/${destination.placeId}`).then(placeData=>{
+            this.setState({placeData});
+            UserApp.instance.place.name = placeData.name;
+            return placeData;
         });
 
         UserApp.instance = this;
@@ -164,7 +162,7 @@ export default class UserApp extends EventComponent{
         const dest = this.state.destination;
         const prev = this.tableSession;
 
-        this.tableSession = TableSession.import(dest.place.id,dest.table,this.wsh.syncData);
+        this.tableSession = TableSession.import(dest.placeId,dest.table,this.wsh.syncData);
         this.tableSession.on("change",()=>this.forceUpdate());
 
         this.do("session-refresh",prev);
@@ -253,13 +251,6 @@ export default class UserApp extends EventComponent{
                 ingredientPrice += i.price;
         }
         return (basePrice+ingredientPrice)*(entry.count||1);
-    }
-    pay(amount){
-        console.log("Paying",amount);
-        this.wsh.send({type:"payment",amount});
-    }
-    set paid(v){
-        if(!this.tableSession.paid)this.tableSession.paid=v;
     }
     get balance(){
         return this.tableSession.balance;

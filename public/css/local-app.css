@@ -82,3 +82,41 @@
     max-height: 75vh;
     user-select: none;
 }
+
+.printer-list{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.printer-list > .printer-option{
+    width: 100%;
+}
+.printer-option{
+    display: grid;
+    grid-template-columns: max-content 1fr 1fr;
+    place-items: center;
+
+    padding: 8px;
+    border:1px solid;
+    border-radius: 8px;
+    transition: background-color .3s ease;
+}
+.printer-option div:first-child{
+    font-weight: bold;
+    font-size: 1.5em;
+}
+.printer-option div:has(button){
+    width: 100%;
+    padding: 10px;
+}
+.printer-option button{
+    padding: 8px;
+    border: 1px solid;
+    border-radius: 8px;
+    background-color: white;
+    width: 100%;
+    font-size: 1.25em;
+}
+.printer-option button:hover{
+    background-color: #eee;
+}

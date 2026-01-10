@@ -34,6 +34,7 @@ export default defineConfig({
     },
   },
   server: {
+    allowedHosts: ["test-savor.com"],
     middlewareMode: 'html',
   },
 })

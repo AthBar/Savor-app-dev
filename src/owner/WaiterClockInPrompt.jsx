@@ -4,21 +4,19 @@ import { API } from "../common/API";
 import { useNavigate } from "react-router";
 import ListenerApp from "./ListenerAppBase";
 
-let tm,tm2;
+let tm,tm2,canReloadWorkers = true;
 export default function ClockInPrompt({placeId,after=_=>_}){
     const nav = useNavigate();
-    let canReloadWorkers = true;
+
     const [workerList,setWorkerList] = useState([]);
     const [placeName,setPlaceName] = useState("...");
     const [errors,setErrors] = useState(null);
-    
-    if(!workerList.length) reloadWorkers();
-    
     const [id,setID] = useState(-1);
     const [pin,setPIN] = useState("");    
 
     useEffect(()=>{
-        API(`/place/basic/${placeId}`).then(r=>setPlaceName(r.name))
+        API(`/place/basic/${placeId}`).then(r=>setPlaceName(r.name));
+        reloadWorkers()
     },[]);
 
     //Reset errors
@@ -32,10 +30,11 @@ export default function ClockInPrompt({placeId,after=_=>_}){
 
     async function reloadWorkers(){
         if(!canReloadWorkers)return;
-
+        
         clearTimeout(tm2);
         tm2 = setTimeout(()=>canReloadWorkers=true,1000);
         canReloadWorkers = false;
+
         return API(`/place/${placeId}/waiter-list`).then(r=>
             r.success?setWorkerList(r.data):null
         );

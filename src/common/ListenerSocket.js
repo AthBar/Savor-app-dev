@@ -27,6 +27,9 @@ export class ListenerClientHandler extends WebsocketHandler{
                     console.log(e)
                     debugger;
                     break;
+                case 1000:
+                    console.log("Listener job finished")
+                    break;
                 default:
                     console.log("WS closure: ",e);
                     break

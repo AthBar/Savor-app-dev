@@ -55,6 +55,9 @@ export class WebsocketHandler extends MyEventTarget{
                 }
                 this.do("kicked",e);
             }
+            else if(e.code==1000){
+                console.log("Websocket closed expectedly. No reconnection attempts will be made");
+            }
             else{
                 console.warn("WebSocket closed with unknown close frame. Please notify support: ",e);
             }

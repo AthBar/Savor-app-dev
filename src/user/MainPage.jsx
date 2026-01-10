@@ -72,7 +72,7 @@ function HeaderForAll({Y}){
                             <div></div>
                         </div>
                         <div className="topbar-around logo">
-                            <img src="/images/logo.svg"/>
+                            <img src="/images/logo.png"/>
                         </div>
                     </div>
                 }

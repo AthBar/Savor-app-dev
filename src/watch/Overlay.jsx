@@ -55,11 +55,11 @@ export default function Overlay(){
 
     if(!window.$savor)return (
     <div className="fixed-centered" style={{fontSize:"1.5em"}}>
-        Δεν βρέθηκε η παγκόσμιο μεταβλητή window.$savor. Δεν είναι δυνατή η φόρτωση των εργαλείων της εφαρμογής
+        Δεν βρέθηκε η παγκόσμια μεταβλητή window.$savor. Δεν είναι δυνατή η φόρτωση των εργαλείων της εφαρμογής
     </div>);
     return  <OverlayContext.Provider value={{setPopup}}>
                 {popup?<PopupCover key="popup"/>:
-                <div className="overlay container bottom right hoverable" key="settings-button">
+                <div className="overlay container right hoverable" style={{bottom:"70px"}} key="settings-button">
                     
                     <div className="print" onClick={()=>setPopup(popup?null:<SettingsPopup/>)}></div>
                 </div>}

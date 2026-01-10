@@ -2,10 +2,13 @@ import { createRoot } from 'react-dom/client';
 import { useState } from 'react';
 
 window.currentPopup = null;
+window.popupLocked = false;
 function Popup(){
     const [popup,setPopup] = useState(null);
-    window.popup = (v,id)=>{
+    window.popup = (v,id,lock)=>{
+        if(window.currentPopup!==id&&window.popupLocked)return;
         window.currentPopup = !!v?(id||true):null;
+        window.popupLocked = lock;
         setPopup(!!v?v:null);
     };
     return popup?

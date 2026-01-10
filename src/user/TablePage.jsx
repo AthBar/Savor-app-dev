@@ -4,7 +4,14 @@ import UserApp, { currency } from "./MainApp";
 import { PriceInput } from "../common/Form";
 
 function TablePageHeader(){
-    return <div className="table-topbar">{UserApp.instance.placeName}</div>
+    return <div className="table-topbar">
+                <div>
+                    <div className="place-title">{UserApp.instance.placeName}</div>
+                    <div style={{width:"100%",display:"flex",justifyContent:"center",background:"white"}}>
+                        <img className="logo" src="/images/logo.png" style={{maxHeight:"30px",}}/>
+                    </div>
+                </div>
+            </div>
 }
 class PaymentWindow extends React.Component{
     #payPart;
@@ -48,18 +55,7 @@ export class OrderHistory extends React.Component{
     #scrollRef = createRef();
     constructor(props){
         super(props);
-        this.state = {menu:undefined};
-        
-        
-        UserApp.menuPromise.then(l=>{
-            const menu = {};
-            for(let i of l){
-                i = {...i};
-                menu[i.code] = i;
-                delete i.code;
-            }
-            this.setState({menu});
-        });
+        this.state = {menu:UserApp.instance.menu};
     }
     componentDidMount(){
         this.#sync();

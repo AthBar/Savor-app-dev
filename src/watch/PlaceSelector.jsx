@@ -18,7 +18,7 @@ export default function PlaceSelection(){
     useEffect(()=>{
         API("/dashboard/places").then(l=>{
             if(l.success)setList(l.data);
-            else debugger;
+            else location.replace("/auth/login?next=%2Fwatch"); 
         },()=>{debugger});
     },[]);
     if(!list)return "Loading...";
