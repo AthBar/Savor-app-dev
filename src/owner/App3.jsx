@@ -71,11 +71,9 @@ export default class OwnerApp3 extends ListenerApp{
     }
     onClose(e){
         if(e.reason=="terminated"){
-            
             window.popup(<PostTerminationPopup/>,"terminated",true);
             ConnectionStateVisualizer.disable();
         }
-        else window.popup(<InvalidClosurePopup e={e}/>);
     }
     zoom(dY){
         const newZoom = this.#zoom+dY;

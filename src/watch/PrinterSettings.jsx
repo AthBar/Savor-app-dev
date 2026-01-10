@@ -31,7 +31,7 @@ export default function POSPrinterSettings(){
     return  <div>
                 <h1>Εκτύπωση</h1>
                 <div>
-                    <button onClick={performIPScan}>Αναζήτηση για εκτυπωτές</button>
+                    <button className="green-wide-button" onClick={performIPScan}>Αναζήτηση για εκτυπωτές</button>
                     <h2>Έγκυρες τοπικές IP:</h2>
                     <div className="printer-list">
                         {ips.map((r,i)=><PrinterOption key={i} IP={r}/>)}

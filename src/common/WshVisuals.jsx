@@ -79,7 +79,7 @@ export function ConnectionStateVisualizer({wsh}){
     function onclose(e){
         setStatus(false);
         disconnectionPopupTimeout = setTimeout(()=>
-            window.popup(<DisconnectedPopup/>,"disconnected")
+            window.popup(<DisconnectedPopup/>,"wsh-disconnect-normal")
         ,2000);
     }
 
@@ -106,7 +106,7 @@ export function ConnectionStateVisualizer({wsh}){
         clearTimeout(disconnectionPopupTimeout);
         setStatus(true);
 
-        window.currentPopup=="disconnected"?
+        window.currentPopup.startsWith("wsh-disconnect")?
             window.popup(false)
             :null;
     }
