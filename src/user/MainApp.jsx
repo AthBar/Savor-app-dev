@@ -3,10 +3,9 @@ import CartPage from './Cart.jsx';
 import TablePage from './TablePage.jsx';
 import  MainPage from './MainPage.jsx';
 import AddressPage from './AddressPage.jsx';
-import QRPage from './QR.jsx';
 import TestPage from './TestPage.jsx';
 import TableClientClientHandler from '../common/TableClientSocket.js';
-import React from 'react';
+import React, { createContext, useContext } from 'react';
 import { TableSession } from "../common/VirtualSessions.js";
 import { API } from "../common/API.js";
 import { EventComponent } from "../common/Event.js";
@@ -19,7 +18,6 @@ function Router(){//Empty string is root, * is unmatched
             <Route path="menu" element={<MainPage/>}/>
             <Route path="cart" element={<CartPage/>}/>
             <Route path="destination-selector" element={<AddressPage/>}/>
-            <Route path="QR" element={<QRPage/>}/>
             <Route path="test" element={<TestPage/>}/>
             <Route path="complete" element={<GoodbyePage/>}/>
             <Route path="*" element={<p>404</p>}/>
@@ -48,6 +46,9 @@ function PlaceClosedPopup({placeName}){
     </div>
 }
 
+const UserAppContext = createContext();
+export const useApp = ()=>useContext(UserAppContext);
+
 export default class UserApp extends EventComponent{
     /**
      * @type {UserApp}
@@ -67,6 +68,8 @@ export default class UserApp extends EventComponent{
     tableSession;
     place;
     placeClosedPopupOn=false;
+
+    focusedDish;
 
     nav;
     #cart=[];
@@ -326,18 +329,34 @@ export default class UserApp extends EventComponent{
     #placeClosedPopupOn;
     render(){
         if(this.left)this.nav("/store/complete");
-        if(!this.state.destination)return <div className="content-centered" style={{fontSize:"1.5em",height:"100%"}}>Φόρτωση...</div>;
+        if(!this.state.destination||!this.menu)return <div className="content-centered" style={{fontSize:"1.5em",height:"100%"}}>Φόρτωση...</div>;
         return this.state.dimensionsRight?
-        [<Router key={this.sess_changes}/>,
-            this.state.popup?
+        <UserAppContext.Provider value={{
+            menu:this.menu,
+            placeName:this.placeName,
+            tableSession:this.tableSession,
+            total:this.total,
+            leave:this.leave,
+            canOrder:this.canOrder,
+            destination:this.destination,
+            popup:this.popup,
+            calculatePrice:this.calculatePrice,
+            addToCart:this.addToCart,
+            place:this.place
+        }}>
+        <Router key={this.sess_changes}/>
+        {this.state.popup?
+
             <div key="popup" className="popup-background" onMouseDown={e=>this.onClick(e)}>
                 <div className="popup-wrapper">
                     {this.state.popup}
                 </div>
             </div>
-            :null
-        ]
-        :<Disabled/>;
+
+        :null}
+        </UserAppContext.Provider>
+        :<Disabled/>
+        
     }
 }
 let inited=false;

@@ -1,48 +1,40 @@
 import React from "react";
-import UserApp, { currency } from "./MainApp.jsx";
+import UserApp, { currency, useApp } from "./MainApp.jsx";
 import IngredientSelector from "./IngredientSelector.jsx";
 
 const cats = ["Σαλάτες","Ορεκτικά","Ζυμαρικά","Πίτσες","Ποτά"];
 cats[-1] = "Καλτσόνε";
 
-class MenuItem extends React.Component{
-    constructor(props){
-        super(props);
+function MenuItem({self}){
+    const sub = self.ingredients.map(p=>p.title).join(", ");
+    if(self.info)self.info = {...self.info}
 
-        const sub = props.self.ingredients.map(p=>p.title).join(", ");
-        if(props.self.info)props.self.info = {...props.self.info}
+    const description = self.description.length>3?self.description:sub;
+    const subtitle = (description[0]||"").toUpperCase()+description.slice(1).toLowerCase();
+    const price = currency(self.price);
 
-        const subtitle = props.self.description.length>3?props.self.description:sub;
-        this.state = {
-            item:props.self,
-            title:props.self.title,
-            subtitle:(subtitle[0]||"").toUpperCase()+subtitle.slice(1),
-            price:currency(props.self.price)
-        }
+    function select(){
+        IngredientSelector.instance.open({code:self.code});
     }
-    #select(){
-        IngredientSelector.instance.open({code:this.state.item.code});
-    }
-    render(){
-        const canOrder = UserApp.instance.canOrder;
-        return (
-            <div className="menu-item" onClick={()=>canOrder?this.#select():null}>
-                <div className="item-title">
-                    <div>{this.state.title}</div>
-                    <div>
-                        {canOrder?
-                            <button className="add">+</button>
-                        :null}
-                    </div>
-                </div>
-                <hr/>
-                <div className="item-details">
-                    <div className="item-ingredients">{this.state.subtitle}</div>
-                    <div className="price-tag">{this.state.price}</div>
+
+    const canOrder = useApp().canOrder;
+    return (
+        <div className="menu-item" onClick={()=>canOrder?select():null}>
+            <div className="item-title">
+                <div>{self.title}</div>
+                <div>
+                    {canOrder?
+                        <button className="add">+</button>
+                    :null}
                 </div>
             </div>
-        );
-    }
+            <hr/>
+            <div className="item-details">
+                <div className="item-ingredients">{subtitle}</div>
+                <div className="price-tag">{price}</div>
+            </div>
+        </div>
+    );
 }
 
 function MenuCategory({name, items}){
@@ -55,7 +47,8 @@ function MenuCategory({name, items}){
     )
 }
 
-export default function MenuComponent({menu}){
+export default function MenuComponent(){
+    const {menu,addToCart} = useApp();
     if(!menu)return <div style={{textAlign:"center",fontSize:"20px"}}>Φόρτωση...</div>;
 
     const categorizedMenu = {};
@@ -78,7 +71,7 @@ export default function MenuComponent({menu}){
                 :"Φόρτωση"
             }
             <p style={{textAlign:"center"}}>Τέλος :&#41;</p>
-            <IngredientSelector buttonText="Προσθήκη στο καλάθι" onSubmit={i=>UserApp.instance.addToCart(i)}/>
+            <IngredientSelector buttonText="Προσθήκη στο καλάθι" onSubmit={i=>addToCart(i)}/>
         </div>
     )
 }

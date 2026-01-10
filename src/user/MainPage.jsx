@@ -1,33 +1,28 @@
 import MenuComponent from "./Menu";
-import UserApp, { currency } from "./MainApp";
-import React, { createRef } from "react";
-import { useNavigate } from "react-router";
+import UserApp, { currency, useApp } from "./MainApp";
+import React, { createRef, useEffect, useState } from "react";
+import { useActionData, useNavigate } from "react-router";
 import { MyOrderSendButton } from "./OrderPreview";
 
-class Banner extends React.Component{
-    #pic;
-    #f=()=>this.setState({y:pageYOffset});
-    constructor(props){
-        super(props);
-        this.state = {y:0,loaded:false};
-        this.#pic = <img src={props.src} height={props.height} width={props.width} ref={createRef()} onLoad={()=>this.setState({loaded:true})} />
-        addEventListener("scroll",this.#f);
-    }
-    componentWillUnmount(){
-        removeEventListener("scroll",this.#f);
-    }
-    render(){
-        return  <div className="banner-container" style={{top: -this.state.y/4 + "px"}} >
-                    {this.#pic}
-                </div>
-    }
+function Banner(props){
+    const [y,setY] = useState(pageYOffset);
+    const [loaded,setLoaded] = useState(false);
+    const f=()=>setY(pageYOffset);
+
+    useEffect(()=>{
+        addEventListener("scroll",f);
+        return ()=>removeEventListener("scroll",f);
+    },[]);
+    
+    return  <div className="banner-container" style={{top: -y/4 + "px"}} >
+                <img {...props} onLoad={()=>setLoaded(true)} />
+            </div>;
 }
 const BackSVG = ()=><svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512" width="50px" height="50px"><path fill="currentColor" d="M4.2 247.5L151 99.5c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L69.3 256l118.5 119.7c4.7 4.7 4.7 12.3 0 17L168 412.5c-4.7 4.7-12.3 4.7-17 0L4.2 264.5c-4.7-4.7-4.7-12.3 0-17z"></path></svg>;
 
 function Topbar({previous,showCart,active}){
+    const {destination,place,canOrder,tableSession} = useApp();
     const goToPage = useNavigate()
-    let destination = UserApp.instance.destination;
-    let placeName = UserApp.instance.place.name;
     return (
         <div className={"topbar"+(active?" active":"")} style={{top:"0px"}}>
   {previous?<div className="back" onClick={()=>goToPage(previous)}>
@@ -35,12 +30,12 @@ function Topbar({previous,showCart,active}){
             </div>:<div/>}
             <div className="middle">
                 <div className="title">
-                    {placeName}
+                    {place.name}
                 </div>
                 {destination?<div className="destination-note">{
-                    UserApp.instance.canOrder?
+                    canOrder?
                     `Η παραγγελία θα έρθει στο τραπέζι ${destination.table}`:
-                    UserApp.instance.tableSession.closed?
+                    tableSession.closed?
                     "Η επιχείρηση βρίσκεται σε διαδικασία κλεισίματος":
                     "Δεν μπορείτε να παραγγείλετε αυτή την στιγμή"
                 }</div>:null}
@@ -53,12 +48,13 @@ function Topbar({previous,showCart,active}){
 }
 
 function HeaderForAll({Y}){
+    const {place,canOrder} = useApp();
     const switchY = 200;
     const goToPage = useNavigate();
-    const placeDirectory = UserApp.instance.place.id||"_";
+    const placeDirectory = place.id||"_";
     return <header>
                 {Y>=switchY?
-                    <Topbar previous={"/store"} showCart={UserApp.instance.canOrder} active/>:
+                    <Topbar previous={"/store"} showCart={canOrder} active/>:
 
                     <div className="topbar2" style={{
                         backgroundColor: `rgba(255,255,255,${Y/switchY})`,
@@ -81,6 +77,7 @@ function HeaderForAll({Y}){
 }
 
 function OrderPreview({cart}){
+    const {emptyCart} = useApp();
     let total = 0;
     const entries = Object.values(cart);
     const count = entries.length;
@@ -92,7 +89,7 @@ function OrderPreview({cart}){
             <div className="price-tag">{currency(total)}</div>
         </div>
         <div className="gotocart-buttons">
-            <button className="del" onClick={()=>UserApp.instance.emptyCart()}>
+            <button className="del" onClick={()=>emptyCart()}>
                 <img src="/delete.svg"/>
             </button>
             <MyOrderSendButton cart={cart}/>
@@ -101,27 +98,19 @@ function OrderPreview({cart}){
 }
 
 let Y = 0;
-export default class MainPage extends React.Component{
-    #f=()=>{Y=pageYOffset;this.forceUpdate()};
-    constructor(props){
-        super(props);
-        addEventListener("scroll",this.#f);
-        UserApp.instance.tableSession.on("change",()=>this.forceUpdate())
-    }
-    componentWillUnmount(){
-        removeEventListener("scroll",this.#f);
-    }
-    componentDidMount(){
+export default function MainPage(){
+    const [y,setY] = useState(Y);
+    const f=()=>setY(Y=pageYOffset);
+
+    useEffect(()=>{
         scrollTo(0,Y);
-        UserApp.menuPromise.then(r=>this.forceUpdate())
-    }
-    render(){
-        return (
-            <div className="content default">
-                <HeaderForAll Y={Y}/>
-                <MenuComponent menu={UserApp.instance.menu}/>
-                <OrderPreview cart={UserApp.instance.tableSession.cart}/>
-            </div>
-        );
-    }
+        addEventListener("scroll",f);
+        return ()=>removeEventListener("scroll",f);
+    },[]);
+
+    return  <div className="content default">
+                <HeaderForAll Y={y}/>
+                <MenuComponent/>
+                <OrderPreview cart={useApp().tableSession.cart}/>
+            </div>;
 }

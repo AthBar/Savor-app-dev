@@ -4,39 +4,41 @@ import React from "react";
 import DashboardMainTabRouter from "./DashboardMainTabRouter";
 import DashboardSidebar from "./DashboardSidebar";
 import { API } from "../common/API";
+import { useState } from "react";
+import { createContext } from "react";
+import { useContext } from "react";
+import { useEffect } from "react";
 
-export default class Dashboard extends React.Component{
-    //Keep this here for other elements to access from within
-    place;
-    /**
-     * @type {Dashboard}
-     */
-    static instance;
-    static currency = p=>(p/100||0).toFixed(2)+"€";
-    constructor(props){
-        super(props);
-        this.state={
-            placeLoaded:false
-        };
-        Dashboard.instance = this;
-        API(`/dashboard/${props.placeId}/permission`,"GET").then(r=>{
-            if(!r.success){debugger;location.replace("/")}
-        });
-        API(`/place/view/${props.placeId}`,"GET").then(r=>{
-            this.place = r;
-            if(!r.success)return this.setState({failure:true});
+const DashboardContext = createContext();
+export const useDashboard = ()=>useContext(DashboardContext);
+
+export default function Dashboard({placeId}){
+    const [placeLoaded,setPlaceLoaded] = useState(false);
+    const [permitted,setPermitted] = useState(null);
+    const [place,setPlace] = useState({});
+
+    useEffect(()=>{
+        API(`/dashboard/${placeId}/permission`).then(r=>setPermitted(r.success));
+        API(`/place/view/${placeId}`).then(r=>{
+            if(!r.success)return setPermitted(false);
+
             delete r.success;
-            delete r.code;
-            this.setState({placeLoaded:true});
+
+            setPlace(r);
+            setPlaceLoaded(true);
         });
-    }
-    render(){
-        if(this.state.failure)return <div>{"Error: "+this.place.code}</div>;
-        return <div className="dashboard-editor-wrapper">
-            <DashboardSidebar/>
-            <div className="dashboard-tab-wrapper">
-                {this.state.placeLoaded?<DashboardMainTabRouter/>:<div style={{fontSize:"25px",fontWeight:"bold"}}>Φόρτωση...</div>}
+    },[]);
+
+    if(!permitted)return <div>Δεν έχετε άδεια διαχείρησης αυτής της επιχείρησης <br/>{place.code}/{place.reason}</div>;
+    return  <DashboardContext.Provider value={{
+                currency: p=>(p/100||0).toFixed(2)+"€",
+                place,
+            }}>
+            <div className="dashboard-editor-wrapper">
+                <DashboardSidebar/>
+                <div className="dashboard-tab-wrapper">
+                    {placeLoaded?<DashboardMainTabRouter/>:<div style={{fontSize:"25px",fontWeight:"bold"}}>Φόρτωση...</div>}
+                </div>
             </div>
-        </div>
-    }
+            </DashboardContext.Provider>
 }

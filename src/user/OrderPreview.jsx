@@ -1,12 +1,13 @@
 import React from "react";
 import { useNavigate } from "react-router";
-import UserApp, { currency } from "./MainApp";
+import UserApp, { currency, useApp } from "./MainApp";
 
 export function MyOrderSendButton({inCart,cart}){
+    const {hasActiveOrder,destination} = useApp();
     const goToPage = useNavigate();
-    const disabled = cart.length<=0||UserApp.instance.hasActiveOrder;
+    const disabled = cart.length<=0||hasActiveOrder;
     const next = disabled?"/store/menu":(inCart?"/store":"/store/cart");
-    const text = disabled?"Πίσω":(inCart?`Αποστολή στο τραπέζι ${UserApp.instance.destination.table}`:"Συνέχεια");
+    const text = disabled?"Πίσω":(inCart?`Αποστολή στο τραπέζι ${destination.table}`:"Συνέχεια");
 
     function onClick(){
         goToPage(next);
@@ -20,21 +21,20 @@ export function MyOrderSendButton({inCart,cart}){
             </button>
 }
 
-export default class OrderPreview extends React.Component{
-    render(){
-        const cart = Object.values(UserApp.instance.tableSession.cart);
-        if(!this.props.cartMode&&cart.length<=0)return null;
+export default function OrderPreview({cartMode}){
+    const {tableSession,calculatePrice,currency} = useApp();
+    const cart = Object.values(tableSession.cart);
+    if(!cartMode&&cart.length<=0)return null;
 
-        let total = 0;
-        for(let i of cart)total+=UserApp.instance.calculatePrice(i);
+    let total = 0;
+    for(let i of cart)total+=calculatePrice(i);
 
-        const text = this.props.cartMode?"Σύνολο":cart.length+" αντικείμενα";
-        return <div className="order-sender">
-            <div className="item-details">
-                <div className="cart-total">{text}</div>
-                <div className="price-tag">{currency(total)}</div>
-            </div>
-            <MyOrderSendButton inCart={this.props.cartMode} cart={cart}/>
+    const text = cartMode?"Σύνολο":cart.length+" αντικείμενα";
+    return <div className="order-sender">
+        <div className="item-details">
+            <div className="cart-total">{text}</div>
+            <div className="price-tag">{currency(total)}</div>
         </div>
-    }
+        <MyOrderSendButton inCart={cartMode} cart={cart}/>
+    </div>
 }

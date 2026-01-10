@@ -1,5 +1,5 @@
 import { useNavigate, useParams } from "react-router";
-import Dashboard from "./Dashboard";
+import Dashboard, { useDashboard } from "./Dashboard";
 
 function DashboardSidebarMain(){
     function e(e){
@@ -50,8 +50,10 @@ function DashboardSidebarMain(){
 }
 
 export default function DashboardSidebar(){
+    const {place} = useDashboard();
+
     return <div className="dashboard-sidebar-wrapper">
-        <div className="dashboard-sidebar-title">{Dashboard.instance.state.placeLoaded?Dashboard.instance.place.name:"Φόρτωση..."}</div>
+        <div className="dashboard-sidebar-title">{place.name}</div>
         <DashboardSidebarMain/>
     </div>
 }

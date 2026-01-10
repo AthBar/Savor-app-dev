@@ -7,7 +7,7 @@ function PlaceOption({data}){
     return <div className="place-option" onClick={()=>nav(`/watch/${data.id}`)}>
         <div className="name">{data.name}</div>
         <div className="location">Ν.Αγχίαλος</div>
-        <div>{data.hasSession?"Ενρργή":"Ανενεργή"}</div>
+        <div>{data.hasSession?"Ενεργή":"Ανενεργή"}</div>
         <div>end</div>
     </div>;
 }

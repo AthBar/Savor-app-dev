@@ -293,14 +293,14 @@ export default class DashboardMenuDishesTab extends DashboardTab{
     }
     createDish(code,title,price){
         const dish = {code,title,price,ingredients:[]};
-        return API(`/dashboard/${Dashboard.instance.place.id}/menu/add-dish`,"POST",dish).then(r=>{
+        return API(`/dashboard/${Dashboard.place.id}/menu/add-dish`,"POST",dish).then(r=>{
             if(r.success)return this.state.dishes[code]=dish;
             this.forceUpdate();
         })
     }
     deleteDish(code){
         if(!this.state.dishes[code])return;
-        API(`/dashboard/${Dashboard.instance.place.id}/menu/delete-dish`,"POST",{code})
+        API(`/dashboard/${Dashboard.place.id}/menu/delete-dish`,"POST",{code})
         .then(r=>{
             if(r.success)delete this.state.dishes[code];
             this.forceUpdate();
@@ -355,11 +355,11 @@ export default class DashboardMenuDishesTab extends DashboardTab{
         this.initialState = list.map(d=>{return {...d}});//Copy array of objects
         this.forceUpdate();
 
-        return API(`/dashboard/${Dashboard.instance.place.id}/menu/change-dishes`,"POST",changed).then(r=>{
+        return API(`/dashboard/${Dashboard.place.id}/menu/change-dishes`,"POST",changed).then(r=>{
             if(r.success)location.reload();
         });
     }
-    render(){
+    _Render({getDishTable,submit}){
         return <div className="dish-list-tab">
             <div>
                 <h1 style={{textAlign:"center"}}>Όλα τα πιάτα</h1>
@@ -370,6 +370,9 @@ export default class DashboardMenuDishesTab extends DashboardTab{
                 <button onClick={()=>this.submit()}>Αποθήκευση</button>
             </div>
         </div>;
+    }
+    render(){
+        
     }
 }
 window.DashboardMenuDishesTab = DashboardMenuDishesTab;
