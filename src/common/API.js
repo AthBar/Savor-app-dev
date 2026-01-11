@@ -19,7 +19,15 @@ export async function API(url,method="GET",body={},options={}){
         initObj.headers["Content-type"] = "application/json";
     }
     try {
-        return fetch(url, initObj).then(r=>r.json());
+        return fetch(url, initObj).then(async r=>{console.log(r);
+            if(r.status==429){
+                let reason = await r.json();
+                reason = (reason instanceof Object)?JSON.stringify(reason):reason;
+                const search = encodeURIComponent(reason);
+                location.replace(`/error/rate-limited?reason=${search}`);
+            }
+            else return r.json();
+        });
     } catch (e) {console.log("error")
         return await Promise.reject({ success: false, error: "Couldn't connect to API server" });
     }

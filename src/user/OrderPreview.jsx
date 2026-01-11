@@ -3,11 +3,11 @@ import { useNavigate } from "react-router";
 import UserApp, { currency, useApp } from "./MainApp";
 
 export function MyOrderSendButton({inCart,cart}){
-    const {hasActiveOrder,destination} = useApp();
+    const {hasActiveOrder,tableSession} = useApp();
     const goToPage = useNavigate();
-    const disabled = cart.length<=0||hasActiveOrder;
+    const disabled = cart.length<=0||hasActiveOrder();
     const next = disabled?"/store/menu":(inCart?"/store":"/store/cart");
-    const text = disabled?"Πίσω":(inCart?`Αποστολή στο τραπέζι ${destination.table}`:"Συνέχεια");
+    const text = disabled?"Πίσω":(inCart?`Αποστολή στο τραπέζι ${tableSession.table}`:"Συνέχεια");
 
     function onClick(){
         goToPage(next);

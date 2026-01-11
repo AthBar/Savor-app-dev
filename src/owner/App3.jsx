@@ -70,6 +70,7 @@ export default class OwnerApp3 extends ListenerApp{
         return <PostTerminationPopup nav={nav}/>
     }
     onClose(e){
+        console.log(e)
         if(e.reason=="terminated"){
             window.popup(<PostTerminationPopup/>,"terminated",true);
             ConnectionStateVisualizer.disable();

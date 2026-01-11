@@ -25,7 +25,12 @@ export default class MyEventTarget{
     do(type,...args){
         if(!this.#evs[type])return;
         for(let f of this.#evs[type]){
-            f.f(...args);
+            try{
+                f.f(...args);
+            }
+            catch(e){
+                console.error("In event listener: ",e)
+            }
             //If listener has one time run enabled, remove the listener
             if(f.once)this.#evs[type].delete(f);
         }

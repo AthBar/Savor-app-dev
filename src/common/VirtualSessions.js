@@ -318,6 +318,9 @@ export class PlaceSession extends MyEventTarget{
         }
         this.do("change");
     }
+    tableLeave(table){
+        delete this.tables[table];
+    }
     /**
      * @returns {TableSession}
      */

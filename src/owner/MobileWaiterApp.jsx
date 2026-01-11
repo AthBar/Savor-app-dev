@@ -1,8 +1,7 @@
 import { Route, Routes, useNavigate, useParams } from "react-router";
 import ListenerApp from "./ListenerAppBase";
 import { useEffect, useState } from "react";
-import { API, currency } from "../common/API";
-import { Waiter } from "../common/VirtualSessions";
+import { currency } from "../common/API";
 import { TimeSince, unixToTimeString } from "../common/TimeComponents";
 
 function MenuDishOptions({dish,category,table,onSubmit,...props}){
@@ -136,7 +135,7 @@ function TableOptionsPage({table}){
         }
 
         return [<div key="order">
-                    <button className="waiter-order-option-button" onClick={canOrder?()=>nav("order"):null}>
+                    <button className="waiter-order-option-button" onClick={()=>nav("order")}>
                         Παρακολούθηση παραγγελίας
                     </button>
                 </div>,
@@ -255,33 +254,46 @@ function CartPage({table}){
         ]
 }
 
-function PaymentPage({table}){
-    if(!MobileWaiterApp.instance.menu)return <div>Φόρτωση...</div>;
-    const tableSession = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
-    let orders = tableSession.orders||[];
-    let total = 0;
-    const mainPart = orders.map((o,i)=>o.delivered&&!o.paid?
+function OrderList({orders}){
+    if(!MobileWaiterApp.instance.menu)return null;
+    return orders.map((o,i)=>o?
                         <div key={i} className="waiter-summary-order">
                             <h3 style={{textAlign:"center"}}>Παραγγελία:</h3>
                             <hr/>
                             {Object.values(o.cart).map((entry,j)=>{
                                 const dish = MobileWaiterApp.instance.menu[entry.code];
                                 const price = MobileWaiterApp.instance.calculatePrice(entry);
-                                total += price;
                                 return <div key={j}>
                                     {entry.count}x {dish.title} - {currency(price)}
                                 </div>
                             })}
                         </div>
                     :null);
-    let hasOrders = false;
-    for(let i of mainPart)if(hasOrders=i)break;
+}
+
+function PaymentPage({table}){
+    if(!MobileWaiterApp.instance.menu)return <div>Φόρτωση...</div>;
+    const tableSession = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
+    let orders = tableSession.orders||[];
+
+    //Calculates total
+    let total = orders.reduce((currentTotal,order)=>
+        order.delivered&&!order.paid?currentTotal+
+            Object.values(order.cart).reduce(
+                (orderTotal,entry)=>orderTotal+MobileWaiterApp.instance.calculatePrice(entry)
+            ,0)
+        :currentTotal
+    ,0);
+    const owedOrders = [];
+
+    for(let order of orders)if(r!=null)owedOrders.push(order);
 
     return <div>
         <div className="waiter-fixed-title">Λογαριασμός για {table}</div>
         <div className="waiter-summary-wrapper">
             <div className="waiter-summary-main">
-                {hasOrders?mainPart:
+                {owedOrders.length>0?
+                    <OrderList orders={owedOrders}/>:
                     <div className="content-centered" style={{width:"100%",fontSize:"1.5em"}}>Καμία παραγγελία δεν οφείλεται</div>
                 }
             </div>
@@ -323,6 +335,30 @@ function CartEditPage({entryToEdit,table}){
                 count={entry.count}
                 url={`${MobileWaiterApp.instance.startingPageURL}/${table}/cart/`}
             />,<button key="send" className="waiter-br-button delete" onClick={onClick}/>];
+}
+
+function OrderWatchPage({tableSession}){
+    const {activeOrder} = tableSession;
+    const nav = useNavigate();
+
+    const table = tableSession.table;
+    const backURL = `${MobileWaiterApp.instance.startingPageURL}/${table}`;
+
+    function deliver(){
+        MobileWaiterApp.instance.deliverOrder(table);
+        nav(backURL);
+    }
+
+    return  <div style={{padding:"70px 15px"}}>
+                <div className="waiter-fixed-title">
+                    Τρέχουσα παραγγελία
+                </div>
+                <div className="waiter-x-selector">
+                    <OrderList orders={[activeOrder]}/>
+                    <button className="waiter-order-option-button" onClick={deliver}>Παραδόθηκε</button>
+                </div>
+                <BackButton url={backURL}/>
+            </div>
 }
 
 
@@ -435,6 +471,12 @@ export default class MobileWaiterApp extends ListenerApp{
         const nav = useNavigate();
         useEffect(()=>nav(url),[]);
     }
+    _OrderPage(){
+        const {table} = useParams();
+        const sess = MobileWaiterApp.instance.placeSession.getLatestTableSession(table);
+
+        return sess?.canOrder?<MenuCategorySelector table={table}/>:<OrderWatchPage tableSession={sess}/>;
+    }
     _Starting(){
         return <Overview/>;
     }
@@ -442,7 +484,7 @@ export default class MobileWaiterApp extends ListenerApp{
         const {table} = useParams();
         return <Routes>
             <Route path="order/:category/*" element={<MobileWaiterApp.instance._CategoryPage/>}/>
-            <Route path="order" element={<MenuCategorySelector table={table}/>}/>
+            <Route path="order" element={<MobileWaiterApp.instance._OrderPage/>}/>
             <Route path="cart" element={<MobileWaiterApp.instance._CartPage/>}/>
             <Route path="cart/:entryToEdit" element={<MobileWaiterApp.instance._CartEditPage/>}/>
             <Route path="pay" element={<MobileWaiterApp.instance._PaymentPage/>}/>

@@ -4,10 +4,10 @@ import UserApp, { currency, useApp } from "./MainApp";
 import { PriceInput } from "../common/Form";
 
 function TablePageHeader(){
-    const {placeName} = useApp();
+    const {place} = useApp();
     return <div className="table-topbar">
                 <div>
-                    <div className="place-title">{placeName}</div>
+                    <div className="place-title">{place.name}</div>
                     <div style={{width:"100%",display:"flex",justifyContent:"center",background:"white"}}>
                         <img className="logo" src="/images/logo.png" style={{maxHeight:"30px",}}/>
                     </div>
@@ -120,14 +120,14 @@ export function OrderHistory(){
 // }
 
 function Buttons(){
-    const {total,tableSession,canOrder,leave} = useApp();
+    const {getTotal,tableSession,canOrder,leave} = useApp();
     const nav = useNavigate();
-    const orderingOff = !canOrder;
+    const orderingOff = !canOrder();
     return  <div className="options">
                 <div className={"option"+(orderingOff?"":" animating")} onClick={()=>nav("/store/menu")}>
                     {orderingOff?"Περιήγηση στον κατάλογο":"Παραγγελία"}
                 </div>
-                {total<=0&&tableSession.orders.length>0?
+                {getTotal()<=0&&tableSession.orders.length>0?
                 <div className="option animating" onClick={()=>leave()}>
                     Αποχώρηση
                 </div>
@@ -152,14 +152,15 @@ function ClosedTablePage(){
 }
 
 function DefaultTablePage(){
-    const {tableSession,popup,destination} = useApp();
+    const {tableSession,popup,onChange} = useApp();
     const [_,redraw] = useState(0);
 
     useEffect(()=>{
         const f = ()=>redraw(_+1);
         console.log(tableSession);
-        tableSession.on("change",f);
-        return ()=>tableSession.off("change",f);
+        return onChange(f);
+        //tableSession.on("change",f);
+        //return ()=>tableSession.off("change",f);
     },[]);
 
     const openPaymentPopup = ()=>popup(<PaymentWindow/>);
@@ -167,7 +168,7 @@ function DefaultTablePage(){
                 <TablePageHeader/>
                 <div className="table-options">
                     <div>
-                    <h1 style={{textAlign:"center"}}>Τραπέζι {destination.table}</h1>
+                    <h1 style={{textAlign:"center"}}>Τραπέζι {tableSession.table}</h1>
                     </div>
                     <OrderHistory/>
                     <Buttons openPaymentPopup={openPaymentPopup}/>

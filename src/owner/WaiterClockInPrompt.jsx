@@ -15,7 +15,11 @@ export default function ClockInPrompt({placeId,after=_=>_}){
     const [pin,setPIN] = useState("");    
 
     useEffect(()=>{
-        API(`/place/basic/${placeId}`).then(r=>setPlaceName(r.name));
+        API(`/place/basic/${placeId}`)
+        .catch((e)=>setErrors("Ο API server απάντησε εσφαλμένα: "+e))
+        .then(r=>setPlaceName(r.name));
+        
+
         reloadWorkers()
     },[]);
 
@@ -25,7 +29,7 @@ export default function ClockInPrompt({placeId,after=_=>_}){
         tm = setTimeout(()=>{
             tm = null;
             setErrors(null);
-        },2000);
+        },5000);
     },[errors]);
 
     async function reloadWorkers(){

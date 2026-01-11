@@ -35,6 +35,20 @@ function Disabled(){
     }}>Αυτή η εφαρμογή προορίζεται για κινητά τηλέφωνα σε κάθετο προσανατολισμό (πορτρέτο)</div>
 }
 
+function FinishPopup(){
+    return  <div className="big-container">
+                <div>
+                    <h2 style={{textAlign:"center"}}>Τέλος συνεδρίας</h2>
+                    <hr/>
+                </div>
+                <div>
+                    <p>
+                        Αυτή η συνεδρία τραπεζιού τελείωσε. Ελπίζουμε να είχατε μία ευχάριστη εμπειρία!
+                    </p>
+                </div>
+            </div>
+}
+
 function PlaceClosedPopup({placeName}){
     return <div style={{padding:"25px",background:"white"}}>
         <div style={{fontSize:"large",textAlign:"center"}}>Η επιχείρηση {placeName} δεν δέχεται παραγγελίες αυτή την στιγμή</div><br/>
@@ -79,11 +93,12 @@ export default class UserApp extends EventComponent{
     constructor(props){
         super(props);
 
+        const {destination} = props;
         const media = matchMedia("screen and (orientation: portrait) and (min-width:300px) and (pointer:coarse)");
         this.state={
             dimensionsRight: media.matches,
             menu:null,
-            destination:props.destination,
+            destination,
             cart:this.#cart,
             draw:0,
             closed:false,
@@ -94,13 +109,13 @@ export default class UserApp extends EventComponent{
         }
         media.addEventListener("change", e=>this.dimensionsRight=e.matches);
 
-        const {destination} = props;
-        if(!destination.success)return location.replace("/");
-
         this.place = window.place = {id:destination.placeId};
 
         this.tableSession = new TableSession(destination.placeId,destination.table);
-        this.tableSession.on("change",()=>this.forceUpdate());
+        this.tableSession.on("change",()=>{
+            this.do("change");
+            this.forceUpdate()
+        });
 
         UserApp.menuPromise = API(`/place/menu/${destination.placeId}`).then(menuData=>{
             const menu = {};
@@ -111,6 +126,7 @@ export default class UserApp extends EventComponent{
             this.wsh.on("handshake-rejected",e=>this.#handleRejection(e));
             this.wsh.on("handshake-finished",()=>this.#sync());
             this.wsh.on("message",m=>this.#onWshMessage(m));
+            this.wsh.on("expected-close",()=>this.finish());
 
             return menuData.data;
         });
@@ -122,6 +138,10 @@ export default class UserApp extends EventComponent{
         });
 
         UserApp.instance = this;
+    }
+    finish(){
+        this.popup(<FinishPopup/>,true)
+        //location.replace("/store/complete");
     }
     #handleRejection(e){
         let json,str;
@@ -149,16 +169,18 @@ export default class UserApp extends EventComponent{
 
         console.warn(...str);
     }
-    leave(){
-        this.wsh.send({type:"leave"});
-    }
-    addToCart(entry){
+    onChange = (listener,once)=>{
+        this.on("change",listener,once);
+        if(!once)return ()=>this.off("change",listener);
+    };
+    leave = ()=>this.wsh.send({type:"leave"});
+    addToCart = (entry)=>{
         this.wsh.send({type:"add-to-cart",entry})
     }
-    changeInCart(key,newEntry){
+    changeInCart = (key,newEntry)=>{
         this.wsh.send({type:"change-in-cart",key,newEntry})
     }
-    removeFromCart(key){console.log("removing")
+    removeFromCart = (key)=>{console.log("removing")
         this.wsh.send({type:"remove-from-cart",key})
     }
     #sync(){
@@ -174,7 +196,7 @@ export default class UserApp extends EventComponent{
         this.forceUpdate();
     }
     #onpopupclose=()=>{};
-    popup(popup,cantClose,onClose){
+    popup=(popup,cantClose,onClose)=>{
         this.#onpopupclose();
         if(this.state.popup.oncloseaspopup instanceof Function)this.state.popup.oncloseaspopup();
         if(popup!==null)this.setState({popup});
@@ -182,12 +204,12 @@ export default class UserApp extends EventComponent{
 
         if(onClose instanceof Function)this.#onpopupclose = onClose;
     }
-    onClick(e){
+    onClick=(e)=>{
         //If popup is allowed to close, and the click event has a target, and the target is one of the dark elements
         if(this.state.popupCanClose&&e.target&&(e.target.classList.contains("popup-background")||e.target.classList.contains("popup-wrapper")))
             this.popup(false)
     }
-    get total(){
+    getTotal = ()=>{
         return this.tableSession.orders.reduce((c,v)=>{
             if(v.rejected||v.cancelled||v.paid)return c;
             else return c+Object.values(v.cart).reduce((c,v)=>c+this.calculatePrice(v),0);
@@ -216,7 +238,7 @@ export default class UserApp extends EventComponent{
     get placeName(){return this.state.placeData.name}
     get menu(){return this.state.menu}
     get cart(){return this.#cart}
-    get hasActiveOrder(){
+    hasActiveOrder=()=>{
         return !this.tableSession.canOrder
     }
     // addToCart(i){
@@ -234,14 +256,14 @@ export default class UserApp extends EventComponent{
     //         cart:this.#cart
     //     })
     // }
-    emptyCart(){
+    emptyCart=()=>{
         this.#cart.splice(0,this.#cart.length);
 
         return this.setState({
             cart:this.#cart
         })
     }
-    calculatePrice(entry){
+    calculatePrice=(entry)=>{
         if(!this.menu)return false;
         
         const dish = this.menu[entry.code];
@@ -255,10 +277,7 @@ export default class UserApp extends EventComponent{
         }
         return (basePrice+ingredientPrice)*(entry.count||1);
     }
-    get balance(){
-        return this.tableSession.balance;
-    }
-    get canOrder(){
+    canOrder = ()=>{
         return !this.tableSession.closed&&!this.tableSession.activeOrder;
     }
     sendOrder(){
@@ -331,19 +350,7 @@ export default class UserApp extends EventComponent{
         if(this.left)this.nav("/store/complete");
         if(!this.state.destination||!this.menu)return <div className="content-centered" style={{fontSize:"1.5em",height:"100%"}}>Φόρτωση...</div>;
         return this.state.dimensionsRight?
-        <UserAppContext.Provider value={{
-            menu:this.menu,
-            placeName:this.placeName,
-            tableSession:this.tableSession,
-            total:this.total,
-            leave:this.leave,
-            canOrder:this.canOrder,
-            destination:this.destination,
-            popup:this.popup,
-            calculatePrice:this.calculatePrice,
-            addToCart:this.addToCart,
-            place:this.place
-        }}>
+        <UserAppContext.Provider value={{...this,currency}}>
         <Router key={this.sess_changes}/>
         {this.state.popup?
 
@@ -370,8 +377,9 @@ function makePromises(){
     UserApp.placePromise = UserApp.destinationPromise.then(d=>
         API(`/place/basic/${d.place}`)
     );
-    window.UserApp = UserApp;
+    
 }
+window.UserApp = UserApp;
 
 export function currency(price){
     return (price/100||0).toFixed(2)+"€";

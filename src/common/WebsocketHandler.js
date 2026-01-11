@@ -56,6 +56,7 @@ export class WebsocketHandler extends MyEventTarget{
                 this.do("kicked",e);
             }
             else if(e.code==1000){
+                this.do("expected-close")
                 console.log("Websocket closed expectedly. No reconnection attempts will be made");
             }
             else{
@@ -107,9 +108,9 @@ export class WebsocketHandler extends MyEventTarget{
                     return;
             }
         });
-        
+        console.log("handshake")
         await new Promise(r=>this.websocket.addEventListener("message",e=>{
-            if(e.data=="HANDSHAKE"){
+            if(e.data=="HANDSHAKE"){console.log("handshake2")
                 r();
                 this.websocket.send("SYNC")
             }
@@ -157,7 +158,6 @@ export class WebsocketHandler extends MyEventTarget{
     parseSyncData(data){
         //console.log("Συγχρονισμός WebSocket με δεδομένα: ",data);
     }
-    #reconnectPromise;
     /**
      * 
      * @returns {Promise}
@@ -170,16 +170,11 @@ export class WebsocketHandler extends MyEventTarget{
         }catch(e){console.log("Error making ws:",e)}
 
         //Return a promise that resolves if the new WebSocket opens, and rejects if it closes
-        return this.#reconnectPromise = new Promise((s,j)=>{
-            //Function generator that empties the existing reconnect promise and resolves/rejects it
-            const f = (s)=>e=>{
-                this.#reconnectPromise=null;
-                s(e);
-            };
-
-            this.websocket.addEventListener("open",f(s));
-            this.websocket.addEventListener("error",f(j));
-            this.websocket.addEventListener("close",f(j));
+        return new Promise((s,j)=>{
+            console.log("AWaiting connect")
+            this.websocket.addEventListener("open",s);
+            this.websocket.addEventListener("error",j);
+            this.websocket.addEventListener("close",j);
         });
     }
     get blocked(){return this.#blocked}

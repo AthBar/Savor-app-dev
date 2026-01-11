@@ -156,13 +156,13 @@ export default class ListenerApp extends EventComponent{
             this.menuByCategory = categorized;
             this.menuCategories = Object.keys(cats);
             this.menu = o;
-        }).catch(e=>console.log("Failed to load menu for listener app"));
+        },console.log).catch(e=>console.log("Failed to load menu for listener app"));
 
         this.place = {id:this.placeId,title:"Φόρτωση"};
 
         ListenerApp.placePromise = API(`/place/view/${props.placeId}`).then(r=>{
             this.place.title=r.name;
-        })
+        }).catch("error")
         ListenerApp.instance = this;
     }
     calculatePrice(entry){
@@ -281,6 +281,7 @@ export default class ListenerApp extends EventComponent{
             
             case "left":
                 tbl.leave();
+                this.placeSession.tableLeave(table);
                 break;
             
             default:
