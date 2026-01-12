@@ -4,7 +4,7 @@ import UserApp from "./MainApp";
 import TestPage from "./TestPage.jsx";
 import { useEffect, useState } from 'react';
 import { API } from '../common/API.js';
-import PlaceClosedPage, { PlaceNonExistentPage } from './PlaceClosedPage.jsx';
+import {PlaceClosedPage,  PlaceInactivePage,  PlaceNonExistentPage } from './PlaceClosedPage.jsx';
 import ErrorManager from './ErrorManager.jsx';
 
 function _UserApp(){
@@ -22,15 +22,15 @@ function _UserApp(){
             if(destination.response==null)return setIsExpired(true);
 
             const status = await API(`/place/status/${destination.response.placeId}`)
-            console.log(status);
+
             setActive(status.success&&status.exists&&status.isActive)
         })()
     },[]);
 
     if(!exists)return <PlaceNonExistentPage/>;
     if(isActive==null)return <div className="content-centered">Loading...</div>;
-
-    return isActive?<UserApp destination={d}/>:<PlaceClosedPage/>;
+    //if(isClosed)return <PlaceClosedPage/>
+    return isActive?<UserApp destination={d}/>:<PlaceInactivePage/>;
 }
 
 const ROOT = createRoot(document.querySelector("div#root"));

@@ -163,8 +163,9 @@ export default class UserApp extends EventComponent{
                     break;
             }
         }
-        catch(e){
-            str = ["Reason for WebSocket closure is unknown (not in JSON): ", e];
+        catch(parseErr){
+            if(e.reason=="Place is closed")this.setState({closed:true});
+            str = ["Reason for WebSocket closure is unknown (not in JSON): ", e.reason];
         }
 
         console.warn(...str);
@@ -278,7 +279,7 @@ export default class UserApp extends EventComponent{
         return (basePrice+ingredientPrice)*(entry.count||1);
     }
     canOrder = ()=>{
-        return !this.tableSession.closed&&!this.tableSession.activeOrder;
+        return !this.state.closed&&!this.tableSession.activeOrder;
     }
     sendOrder(){
         this.wsh.send({type:"send-order"});
@@ -287,6 +288,8 @@ export default class UserApp extends EventComponent{
         this.#globals.made = false;
         return this.constructor.prototype.__proto__.setState.call(this,state,...o);
     }
+    getDestination = ()=>this.destination;
+    isClosed = ()=>this.state.closed;
     #onWshMessage(msg){
         switch(msg.type){
             case "cart-removal":
@@ -350,7 +353,7 @@ export default class UserApp extends EventComponent{
         if(this.left)this.nav("/store/complete");
         if(!this.state.destination||!this.menu)return <div className="content-centered" style={{fontSize:"1.5em",height:"100%"}}>Φόρτωση...</div>;
         return this.state.dimensionsRight?
-        <UserAppContext.Provider value={{...this,currency}}>
+        <UserAppContext.Provider value={{...this,currency}} key={Date.now()}>
         <Router key={this.sess_changes}/>
         {this.state.popup?
 

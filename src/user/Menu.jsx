@@ -17,7 +17,7 @@ function MenuItem({self}){
         IngredientSelector.instance.open({code:self.code});
     }
 
-    const canOrder = useApp().canOrder;
+    const canOrder = !useApp().isClosed();
     return (
         <div className="menu-item" onClick={()=>canOrder?select():null}>
             <div className="item-title">

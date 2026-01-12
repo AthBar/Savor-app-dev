@@ -141,7 +141,10 @@ function ClosedTablePage(){
                 <div className="table-options">
                     <div>
                     <h1 style={{textAlign:"center"}}>Η επιχείρηση κλείνει</h1>
-                    <p>Μπορείτε ακόμη να περιηγηθείτε στον κατάλογο, χωρίς να στείλετε παραγγελία</p>
+                    <p>
+                        Μπορείτε ακόμη να περιηγηθείτε στον κατάλογο, χωρίς να στείλετε παραγγελία. <br/>
+                        Αφού η επιχείρηση κλείσει δεν θα μπορείτε να δείτε τον κατάλογο
+                    </p>
                     </div>
                     <div>
                         <hr/>
@@ -177,6 +180,6 @@ function DefaultTablePage(){
 }
 
 export default function TablePage(){
-    const {tableSession} = useApp();
-    return tableSession.closed?<ClosedTablePage/>:<DefaultTablePage/>;
+    const {tableSession,isClosed} = useApp();
+    return isClosed()?<ClosedTablePage/>:<DefaultTablePage/>;
 }

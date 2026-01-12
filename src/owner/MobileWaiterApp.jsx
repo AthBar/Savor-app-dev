@@ -286,7 +286,7 @@ function PaymentPage({table}){
     ,0);
     const owedOrders = [];
 
-    for(let order of orders)if(r!=null)owedOrders.push(order);
+    for(let order of orders)if(order.delivered&&!order.paid)owedOrders.push(order);
 
     return <div>
         <div className="waiter-fixed-title">Λογαριασμός για {table}</div>

@@ -21,7 +21,8 @@ function Banner(props){
 const BackSVG = ()=><svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512" width="50px" height="50px"><path fill="currentColor" d="M4.2 247.5L151 99.5c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L69.3 256l118.5 119.7c4.7 4.7 4.7 12.3 0 17L168 412.5c-4.7 4.7-12.3 4.7-17 0L4.2 264.5c-4.7-4.7-4.7-12.3 0-17z"></path></svg>;
 
 function Topbar({previous,showCart,active}){
-    const {destination,place,canOrder,tableSession} = useApp();
+    const {getDestination,place,canOrder,isClosed,tableSession} = useApp();
+    const destination = getDestination();
     const goToPage = useNavigate()
     return (
         <div className={"topbar"+(active?" active":"")} style={{top:"0px"}}>
@@ -33,9 +34,9 @@ function Topbar({previous,showCart,active}){
                     {place.name}
                 </div>
                 {destination?<div className="destination-note">{
-                    canOrder?
+                    canOrder()?
                     `Η παραγγελία θα έρθει στο τραπέζι ${destination.table}`:
-                    tableSession.closed?
+                    isClosed()?
                     "Η επιχείρηση βρίσκεται σε διαδικασία κλεισίματος":
                     "Δεν μπορείτε να παραγγείλετε αυτή την στιγμή"
                 }</div>:null}
@@ -54,7 +55,7 @@ function HeaderForAll({Y}){
     const placeDirectory = place.id||"_";
     return <header>
                 {Y>=switchY?
-                    <Topbar previous={"/store"} showCart={canOrder} active/>:
+                    <Topbar previous={"/store"} showCart={canOrder()} active/>:
 
                     <div className="topbar2" style={{
                         backgroundColor: `rgba(255,255,255,${Y/switchY})`,
