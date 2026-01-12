@@ -164,7 +164,7 @@ export default class UserApp extends EventComponent{
             }
         }
         catch(e){
-            str = ["Reason for WebSocket closure is unknown (not in JSON): ", e.reason];
+            str = ["Reason for WebSocket closure is unknown (not in JSON): ", e];
         }
 
         console.warn(...str);
