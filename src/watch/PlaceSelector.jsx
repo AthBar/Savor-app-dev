@@ -16,10 +16,10 @@ export default function PlaceSelection(){
     const [list,setList] = useState(null);
     
     useEffect(()=>{
-        API("/dashboard/places").then(l=>{
+        API("/dashboard/places").then(l=>{console.log(l)
             if(l.success)setList(l.data);
             else location.replace("/auth/login?next=%2Fwatch"); 
-        },()=>{debugger});
+        },()=>{});
     },[]);
     if(!list)return "Loading...";
 

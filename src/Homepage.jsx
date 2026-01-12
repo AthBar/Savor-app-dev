@@ -5,7 +5,7 @@ export default function(){
         <h2>Savor:</h2>
         <hr/>
         <div style={{display:"flex",flexDirection:"column"}}>
-            <a href="/dashboard">Dashboard</a><br/>
+            <a href="/watch">Παρακολούθηση επιχείρησης</a><br/>
             <Link to="/auth/login">Login</Link><br/>
             <Link to="/auth/signup">Signup</Link><br/>
         </div>

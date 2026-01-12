@@ -16,7 +16,6 @@ function App() {
         <Route path="/auth/*" element={<AuthPage/>}/>
         <Route path="/krouseis" element={<CollisionSimulator/>}/>
         <Route path="/pedio" element={<Pedio/>}/>
-        <Route path="/not-open" element="Place is closed"/>
         <Route path="/test/*" element={<TestPage/>}/>
         <Route path="*" element="404"/>
     </Routes>

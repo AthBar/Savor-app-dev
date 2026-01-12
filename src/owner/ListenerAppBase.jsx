@@ -60,7 +60,7 @@ function OrderHistoryOverview({orderList,table,setOrder}){
                 {
                     Array.isArray(orderList)&&orderList.length>0?
                     orderList.toReversed().map((r,i)=>
-                        <div key={i} className={"history-order"+(!r.accepted&&!r.rejected?" pending-order":"")} onClick={()=>setOrder(r)}>{table}-{orderList.length-i} ({timeString(r.time)})</div>
+                        <div key={i} className={"history-order"+(!r.accepted&&!r.rejected&&!r.delivered?" pending-order":"")} onClick={()=>setOrder(r)}>{table}-{orderList.length-i} ({timeString(r.time)})</div>
                     ):
                     <div className="no-orders content-centered">Καμία παραγγελία</div>
                 }
