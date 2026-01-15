@@ -1,5 +1,3 @@
-
-import UserApp from "../user/MainApp.jsx";
 import { WebsocketHandler } from "./WebsocketHandler.js";
 
 export default class TableClientClientHandler extends WebsocketHandler{
@@ -23,18 +21,6 @@ export default class TableClientClientHandler extends WebsocketHandler{
             if(window.UserApp&&code==1000&&reason=="Place not open")
                 window.UserApp.instance.isOpen = false;
         })
-    }
-    async sendOrderData(data){
-        return UserApp.destinationPromise.then(d=>d?
-            UserApp.destinationPromise.then(()=>UserApp.socket.send(data))
-            :fetch("/api/order/send", {
-                method: "POST",
-                headers:{
-                    "Content-type":"application/json"
-                },
-                body:JSON.stringify(data)
-            })
-        );
     }
 }
 

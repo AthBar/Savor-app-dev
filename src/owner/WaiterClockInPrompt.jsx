@@ -39,7 +39,7 @@ export default function ClockInPrompt({placeId,after=_=>_}){
         tm2 = setTimeout(()=>canReloadWorkers=true,1000);
         canReloadWorkers = false;
 
-        return API(`/place/${placeId}/waiter-list`).then(r=>
+        return API(`/watch/${placeId}/waiter-list`).then(r=>
             r.success?setWorkerList(r.data):null
         );
     }
@@ -48,7 +48,7 @@ export default function ClockInPrompt({placeId,after=_=>_}){
         if(!hasWorker)return setErrors("Δεν υπάρχει προσωπικό");
         if(id<0)return setErrors("Επιλέξτε όνομα");
         if(pin.length!=6)return setErrors("Εισάγετε ένα πλήρες PIN");
-        API(`/dashboard/${placeId}/clock-in`,"POST",{id,pin}).then(r=>{
+        API(`/watch/${placeId}/clock-in`,"POST",{id,pin}).then(r=>{
             if(r.success){
                 localStorage.setItem("clocked-in",JSON.stringify({placeId,id,pin,clockInTime:Date.now()}));
                 nav(`/dashboard/waiter/${placeId}/`);

@@ -1,39 +1,45 @@
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimal-ui">
-        <link rel="stylesheet" href="/css/style.css"/>
-        <link rel="stylesheet" href="/css/local-app.css"/>
-    <title>Savor</title>
-        <style>
-      #loading-screen{
-        position: fixed;
-        top:50%;
-        left: 50%;
-        transform: translate(-50%,-50%);
-        font-size: 5em;
-        animation: loading-screen 1s alternate infinite;
-        user-select: none;
-      }
-      @keyframes loading-screen {
-        from{color:black}
-        to{color:#aaa}
-      }
-    </style>
-    <script type="module">
-  import RefreshRuntime from '/@react-refresh'
-  RefreshRuntime.injectIntoGlobalHook(window)
-  window.$RefreshReg$ = () => {}
-  window.$RefreshSig$ = () => (type) => type
-  window.__vite_plugin_react_preamble_installed__ = true
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, minimal-ui">
+<link rel="stylesheet" href="/css/style.css"/>
+<link rel="stylesheet" href="/css/local-app.css"/>
+<title>Savor</title>
+<style>
+#loading-screen{
+position:fixed;
+top:50%;
+left:50%;
+max-width: 75%;
+transform:translate(-50%,-50%);
+font-size:5em;
+animation:loading-screen 1s alternate infinite;
+user-select:none;
+}
+@keyframes loading-screen {
+from{filter:opacity(0.5)}
+to{filter:opacity(1)}}
+</style>
+<script type="module">
+import RefreshRuntime from '/@react-refresh'
+RefreshRuntime.injectIntoGlobalHook(window)
+window.$RefreshReg$=()=>{}
+window.$RefreshSig$=()=>(type)=>type
+window.__vite_plugin_react_preamble_installed__=true
 </script>
 </head>
 <body>
-    <div id="root"></div>
-    <div id="loading-screen">Savor</div>
-    <script>
-      window.loadingElement = document.querySelector("#loading-screen");
-    </script>
-    <script type="module" src="/src/user/main.jsx"></script>
-  </body>
+<div id="root"></div><div id="loading-screen">Savor</div>
+<script>window.loadingElement=document.querySelector("#loading-screen");
+  let img = new Image();
+  img.src = "/images/logo.png";
+  img.id="loading-screen";
+  img.onload = ()=>{
+    document.body.removeChild(window.loadingElement);
+    document.body.appendChild(img);
+    window.loadingElement=img;
+  }
+</script>
+<script type="module" src="/src/user/main.jsx"></script>
+</body>
 </html>

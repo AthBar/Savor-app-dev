@@ -1,5 +1,5 @@
-import React from "react";
-import UserApp, { currency, useApp } from "./MainApp.jsx";
+import { useSyncExternalStore } from "react";
+import { currency, useApp } from "./MainApp.jsx";
 import IngredientSelector from "./IngredientSelector.jsx";
 
 const cats = ["Σαλάτες","Ορεκτικά","Ζυμαρικά","Πίτσες","Ποτά"];
@@ -12,12 +12,13 @@ function MenuItem({self}){
     const description = self.description.length>3?self.description:sub;
     const subtitle = (description[0]||"").toUpperCase()+description.slice(1).toLowerCase();
     const price = currency(self.price);
-
+    const {app} = useApp();
     function select(){
-        IngredientSelector.instance.open({code:self.code});
+        //IngredientSelector.instance.open({code:self.code});
+        app.startDishEditing(self.code);
     }
 
-    const canOrder = !useApp().isClosed();
+    const canOrder = !useApp().app.place.status.closed;
     return (
         <div className="menu-item" onClick={()=>canOrder?select():null}>
             <div className="item-title">
@@ -40,15 +41,17 @@ function MenuItem({self}){
 function MenuCategory({name, items}){
     return (
         <div className="menu-category">
-            <h1>{name}</h1>
+            <h1 style={{textAlign:"center"}}>{name}</h1>
             <hr/>
+            <br/>
             {(items||[]).map((i,n)=>(<MenuItem key={n} self={i}/>))}
         </div>
     )
 }
 
 export default function MenuComponent(){
-    const {menu,addToCart} = useApp();
+    const {app} = useApp();
+    const menu = app.menu;
     if(!menu)return <div style={{textAlign:"center",fontSize:"20px"}}>Φόρτωση...</div>;
 
     const categorizedMenu = {};
@@ -59,10 +62,10 @@ export default function MenuComponent(){
         else categorizedMenu[cat] = [i];
     }
 
+    useSyncExternalStore(app.subscription,()=>app.menu);
+
     return(
         <div className="menu-container">
-            <h1 style={{textAlign:"center"}}>Κατάλογος:</h1>
-            <hr/>
             {
                 categorizedMenu?
                 Object.keys(categorizedMenu).map(key=>(
@@ -71,7 +74,7 @@ export default function MenuComponent(){
                 :"Φόρτωση"
             }
             <p style={{textAlign:"center"}}>Τέλος :&#41;</p>
-            <IngredientSelector buttonText="Προσθήκη στο καλάθι" onSubmit={i=>addToCart(i)}/>
+            <IngredientSelector buttonText="Προσθήκη στο καλάθι" onSubmit={i=>app.addToCart(i)}/>
         </div>
     )
 }

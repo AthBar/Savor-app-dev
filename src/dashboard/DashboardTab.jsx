@@ -7,6 +7,6 @@ export default class DashboardTab extends React.Component{
     place;
     constructor(props){
         super(props);
-        this.place=Dashboard.instance.place;
+        this.place=Dashboard.place;
     }
 }

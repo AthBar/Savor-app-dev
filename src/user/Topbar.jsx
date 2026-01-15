@@ -1,14 +1,16 @@
 import { useNavigate } from "react-router";
-import UserApp from "./MainApp";
+import { useApp } from "./MainApp";
+import UserApp from "./UserApp";
 
 function BackSVG({size=50}){
     return (<svg aria-hidden="true" focusable="false" role="img" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 512" width={size+"px"} height={size+"px"}><path fill="currentColor" d="M4.2 247.5L151 99.5c4.7-4.7 12.3-4.7 17 0l19.8 19.8c4.7 4.7 4.7 12.3 0 17L69.3 256l118.5 119.7c4.7 4.7 4.7 12.3 0 17L168 412.5c-4.7 4.7-12.3 4.7-17 0L4.2 264.5c-4.7-4.7-4.7-12.3 0-17z"></path></svg>);
 }
 
 export default function Topbar({previous,showCart,active}){
+    const {app} = useApp();
     let nav = useNavigate();
-    let destination = UserApp.instance.destination;
-    let placeName = UserApp.instance.placeName;
+    let destination = app.destination;
+    let placeName = app.place.name;
     const goToPage = p=>{
         nav(p);
         localStorage.setItem("_savr__last",location.pathname);

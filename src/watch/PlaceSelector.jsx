@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { API } from "../common/API";
 
@@ -14,15 +14,16 @@ function PlaceOption({data}){
 
 export default function PlaceSelection(){
     const [list,setList] = useState(null);
+    const [connectionError,setConnectionError] = useState(false);
     
     useEffect(()=>{
         API("/dashboard/places").then(l=>{console.log(l)
             if(l.success)setList(l.data);
             else location.replace("/auth/login?next=%2Fwatch"); 
-        },()=>{});
+        },()=>{setConnectionError(true,console.log("ερρορ"))});
     },[]);
-    if(!list)return "Loading...";
-
+    if(connectionError)return <div className="fixed-centered" style={{textAlign:"center"}}>Η σύνδεση με τον API server απέτυχε<br/> Ενημερώστε την υποστήριξη</div>;
+    if(!list)return <div className="fixed-centered">Φόρτωση...</div>;
     return <div className="place-selector fixed-centered">
                 <div className="selector-head">
                     Επιλογή επιχείρησης για προβολή

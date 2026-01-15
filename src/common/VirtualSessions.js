@@ -149,12 +149,17 @@ export class TableSession extends MyEventTarget{
         this.do("change");
     }
     removeFromCart(key){
-        delete this.cart[key];
+        const {[key]:_,...newCart} = this.cart;
+        this.cart = {...newCart};
         this.do("change");
     }
     addToCart(key,entry){
-        this.cart[key] = entry;
+        this.cart = {...this.cart,[key]:entry};
         this.do("change");
+    }
+    emptyCart(){
+        this.cart = {};
+        this.do("change");   
     }
     acceptOrder(){
         this.orders.at(-1).accept();

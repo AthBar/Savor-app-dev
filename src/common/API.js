@@ -19,7 +19,7 @@ export async function API(url,method="GET",body={},options={}){
         initObj.headers["Content-type"] = "application/json";
     }
     try {
-        return fetch(url, initObj).then(async r=>{console.log(r);
+        return fetch(url, initObj).then(async r=>{
             if(r.status==429){
                 let reason = await r.json();
                 reason = (reason instanceof Object)?JSON.stringify(reason):reason;

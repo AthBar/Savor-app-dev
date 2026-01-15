@@ -1,32 +1,31 @@
+import { useState } from "react";
 import { API } from "../common/API";
+import { useDashboard } from "./Dashboard";
 import DashboardTab from "./DashboardTab";
+import MenuComponent from "../user/Menu";
 
-export default class DashboardMenuTab extends DashboardTab{
-    static menuPromise;
-    constructor(props){
-        super(props);
-        this.state={menu:false};
-        if(!DashboardMenuTab.menuPromise){
-            DashboardMenuTab.menuPromise = API(`/place/menu/${this.place.id}`);
-        }
-        DashboardMenuTab.menuPromise.then(r=>this.setState({menu:r.data}));
+let menuPromise;
+export default function DashboardMenuTab(){
+    const {place} = useDashboard();
+    const [menu,setMenu] = useState();
+
+    if(!menuPromise)menuPromise = API(`/place/menu/${place.id}`);
+    menuPromise.then(r=>setMenu(r.data));
+
+    function Emulator(){
+        if(!menu)return <div>Loading....</div>;
+        //return <MenuComponent menu={menu}/>;
     }
-    emulator(){
-        if(!this.state.menu)return <div>Loading....</div>;
-        //return <MenuComponent menu={this.state.menu}/>;
-    }
-    render(){
-        return <div className="menu-tab">
-            <div><h1 style={{textAlign:"center"}}>Προβολή πελάτη</h1></div>
-            <hr/>
-            <div className="emulator-wrapper">
-                <div className="mobile-emulator">
-                    {this.emulator()}
-                </div>
-                <div className="pc-emulator">
-                    {this.emulator()}
-                </div>
+    return <div className="menu-tab">
+        <div><h1 style={{textAlign:"center"}}>Προβολή πελάτη</h1></div>
+        <hr/>
+        <div className="emulator-wrapper">
+            <div className="mobile-emulator">
+                <Emulator/>
             </div>
-        </div>;
-    }
+            <div className="pc-emulator">
+                <Emulator/>
+            </div>
+        </div>
+    </div>;
 }
