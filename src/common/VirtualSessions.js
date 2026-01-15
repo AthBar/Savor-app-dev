@@ -272,7 +272,7 @@ export class TableSession extends Unit{
         }
     }
 }
-export class PlaceSession extends MyEventTarget{
+export class PlaceSession extends Unit{
     closed;
     placeId;
     tables={};
@@ -285,6 +285,7 @@ export class PlaceSession extends MyEventTarget{
     }
     open(){
         this.closed = false;
+        console.log("Opening")
         this.do("change");
         this.do("state-change",false);
     }

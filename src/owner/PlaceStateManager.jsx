@@ -16,7 +16,8 @@ export default function PlaceStateManager(){
         timeout = setTimeout(()=>setActive(true),1000+1000*Math.random());
     },[closed]);
 
-    useSyncExternalStore(app.subscription,()=>app.updateCounter)
+    useSyncExternalStore(app.placeSession.subscription,()=>app.placeSession.closed);
+    console.log("Re")
 
     const onClick = closed?()=>app.open():()=>app.close();
     const normalButton =<button className={closed?"green-wide-button":"delete-button"} onClick={onClick}>
