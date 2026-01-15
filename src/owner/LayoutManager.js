@@ -29,6 +29,9 @@ export default class LayoutManager extends Unit{
         this.selectedTable = id;
         this.change();
     }
+    containsTable(table){
+        return Object.keys(this.blinks).includes(table);
+    }
     async initialize(){
         return this.#initialize().then(r=>{
             this.isLoaded = true;

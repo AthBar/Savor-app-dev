@@ -1,10 +1,11 @@
 import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ConnectionStateVisualizer } from "../common/WshVisuals.jsx";
-import ListenerApp from "./ListenerAppBase.jsx";
 import PlaceStateManager from "./PlaceStateManager";
 import TableSessionManager from "./TableSessionManager.jsx";
 import WaiterManager from "./WaiterManagement";
 import { LayoutVisualizer } from "./LayoutSVG.jsx";
+import WatchApp from "./WatchApp.js";
+import { ListenerAppContext } from "./ListenerAppBase.jsx";
 
 function NoFullscreen(){
     return <div>
@@ -40,15 +41,8 @@ function PostTerminationPopup(){
     </div>
 }
 
-const WatchAppContext = createContext();
-/**
- * 
- * @returns {ListenerApp}
- */
-export const useWatchApp = ()=>useContext(WatchAppContext);
-
 export default function OwnerApp4({placeId}){
-    const app = useMemo(()=>new ListenerApp({placeId}),[]);
+    const app = useMemo(()=>new WatchApp(placeId),[]);
     const [_,redraw]=useState(0);
 
     function onClose(e){
@@ -71,14 +65,14 @@ export default function OwnerApp4({placeId}){
     //useEffect(()=>{setTimeout(()=>redraw(_+1),1000)});
 
     if(!app.isConnected)return "Loadingstate";
-    return <WatchAppContext.Provider value={app}>
+    return <ListenerAppContext.Provider value={app}>
         <div className="listener-app-3">
             <ConnectionStateVisualizer wsh={app.wsh}/>
             <div className="listener-layout-view listener-top-center" style={{padding:"15px"}}>
                 <div className="layout-edit-btn-wrapper">
                     <a href={`/dashboard/${app.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>
                 </div>
-                <LayoutVisualizer manager={app.layoutManager}/>
+                <LayoutVisualizer app={app}/>
             </div>
             <div className="listener-full-left">
                 <WaiterManager key={app.sess_changes}/>
@@ -90,7 +84,7 @@ export default function OwnerApp4({placeId}){
                 <PlaceStateManager/>
             </div>
         </div>
-    </WatchAppContext.Provider>;
+    </ListenerAppContext.Provider>;
 }
 OwnerApp4.instance = {
     open:()=>this.wsh.send({type:"open"}),

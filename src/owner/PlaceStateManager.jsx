@@ -1,12 +1,11 @@
 import { useEffect, useSyncExternalStore } from "react";
 import { useState } from "react";
-import OwnerApp3, { useWatchApp } from "./App3";
-import ListenerApp from "./ListenerAppBase";
+import { useListenerApp } from "./ListenerAppBase";
 
 let timeout;
 //I realized react functions are the norm
 export default function PlaceStateManager(){
-    const app = useWatchApp();
+    const app = useListenerApp();
     const closed = app.placeSession.closed;
     const [active,setActive] = useState(false);
 

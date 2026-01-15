@@ -1,6 +1,5 @@
-import React, { useContext, useEffect, useState, useSyncExternalStore } from "react";
-import ListenerApp from "./ListenerAppBase";
-import OwnerApp3, { useWatchApp } from "./App3";
+import React, { useContext, useState, useSyncExternalStore } from "react";
+import { useListenerApp } from "./ListenerAppBase";
 
 function HideablePin({ pin }) {
   const [visible, setVisible] = useState(true);
@@ -77,7 +76,7 @@ function WaiterWidget({self,setName}){
 const waiterContext = React.createContext({waiters:{}});
 
 export default function WaiterManager(){
-    const app = useWatchApp();
+    const app = useListenerApp();
     const [waiters,setWaiters] = useState(app.placeSession.waiters);
     const [rerollTime,setRerollTime] = useState(0);
     app.on("session-refresh",sess=>setWaiters(sess.waiters));

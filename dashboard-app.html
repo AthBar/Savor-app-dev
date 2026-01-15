@@ -19,13 +19,35 @@
   window.$RefreshSig$ = () => (type) => type
   window.__vite_plugin_react_preamble_installed__ = true;
     </script>
+    <style>
+#loading-screen{
+position:fixed;
+top:50%;
+left:50%;
+max-width: 75%;
+transform:translate(-50%,-50%);
+font-size:5em;
+animation:loading-screen 1s alternate infinite;
+user-select:none;
+}
+@keyframes loading-screen {
+from{filter:opacity(0.5)}
+to{filter:opacity(1)}}
+</style>
 </head>
 <body>
     <div id="root"></div>
     <div id="loading-screen">Savor</div>
-    <script>
-      window.loadingElement = document.querySelector("#loading-screen");
-    </script>
+<script>window.loadingElement=document.querySelector("#loading-screen");
+  let img = new Image();
+  img.src = "/images/logo.png";
+  img.id="loading-screen";
+  img.onload = ()=>{
+    document.body.removeChild(window.loadingElement);
+    document.body.appendChild(img);
+    window.loadingElement=img;
+  }
+</script>
     <script type="module" src="/src/owner/main.jsx"></script>
   </body>
 </html>

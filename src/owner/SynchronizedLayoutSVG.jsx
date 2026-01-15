@@ -23,7 +23,7 @@ export default class SynchronizedLayoutManager extends LayoutManager{
             //If connected but no orders, make a blinking black
             if(sess.connects>0&&!sess.isActive)startColor = "gray";
 
-            if(lastOrder){
+            if(lastOrder.running){
                 //If rejected, make a static red
                 if(lastOrder.rejected){
                     console.log("Rej");
@@ -37,9 +37,10 @@ export default class SynchronizedLayoutManager extends LayoutManager{
                 else if(!lastOrder.delivered){
                     startColor = endColor = "#080";
                 }
-                if(lastOrder.paid){
-                    startColor = endColor = "#880";
-                }
+                
+            }
+            else if(lastOrder.paid){
+                startColor = endColor = "#880";
             }
             this.tableColor(table,startColor,endColor);
         }

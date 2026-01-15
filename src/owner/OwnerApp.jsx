@@ -1,14 +1,12 @@
 import MyEventTarget, { EventComponent } from "../common/Event";
 import { Route, Routes, useNavigate, useParams } from "react-router";
-import LayoutSVG from "./LayoutSVG";
 import PlaceSelection from "../dashboard/PlaceSelection";
 import DashboardTopbar from "../dashboard/DashboardTopbar";
 import Dashboard from "../dashboard/Dashboard";
 import React, { useEffect, useState } from "react";
 import OwnerApp3 from "./App3";
 import LayoutEditor from "./LayoutEditor";
-import MobileApp from "./MobileApp";
-import MobileWaiterApp from "./MobileWaiterApp";
+import MobileWaiterApp, { MobileWaiterApp2 } from "./MobileWaiterApp";
 import ClockInPrompt from "./WaiterClockInPrompt";
 import { API } from "../common/API";
 
@@ -42,6 +40,7 @@ class DashboardRouter extends React.Component{
         //Check if clocked in and if not, then make sure we are in the starter page
         const clockedIn = localStorage.getItem("clocked-in");
         const [allowed,setAllowed] = useState(clockedIn);
+        const [loaded,setLoaded] = useState(false);
         
         useEffect(()=>{
             //If not clocked in, check user permissions before showing the waiter app
@@ -49,15 +48,19 @@ class DashboardRouter extends React.Component{
                 if(!window.permissionPromise)window.permissionPromise=API(`/dashboard/${id}/permission`);
                 window.permissionPromise.then(r=>{console.log(r)
                     const l = `/dashboard/waiter/${id}`;
+                    setLoaded(true);
                     if(r.success)setAllowed(true);
                     else if(location.pathname!=l)nav(l);
                     else setAllowed(false); //For shits and giggles
-                });
+                }).catch(()=>setLoaded(true));
             }
-            else setAllowed(true);
-        },[clockedIn]);
+            else {
+                setLoaded(true);
+                setAllowed(true);
+            }
+        },[]);
 
-        const toShow = allowed?<MobileWaiterApp placeId={id}/>:<ClockInPrompt placeId={id} after={()=>redraw(_+1)}/>;
+        const toShow = allowed?<MobileWaiterApp2 placeId={id}/>:<ClockInPrompt placeId={id} after={()=>redraw(_+1)}/>;
         const match = window.matchMedia('screen and (pointer: coarse) and (orientation:landscape)');
         const shouldShowMobileApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
@@ -69,7 +72,9 @@ class DashboardRouter extends React.Component{
             </div>
         }
 
-        return shouldShowMobileApp?toShow:<Disabled/>;
+        if(!shouldShowMobileApp)return <Disabled/>;
+        if(!loaded)return <img src="/images/logo.png" id="loading-screen"/>;
+        return toShow;
     }
     _LayoutEditor(){
         const {id} = useParams();
@@ -86,7 +91,7 @@ class DashboardRouter extends React.Component{
         const shouldShowPCApp = match.matches;
         match.addEventListener("change",()=>redraw(_+1));
 
-        return shouldShowPCApp?<OwnerApp3 placeId={id}/>:<MobileApp placeId={id}/>;
+        return <OwnerApp3 placeId={id}/>;
     }
 }
 
@@ -99,10 +104,6 @@ export default class OwnerApp extends EventComponent{
     #onclose=()=>{};
     wsh;
     sessions={};
-    /**
-     * @type {LayoutSVG}
-     */
-    layoutSVG;
     history=[];
     //layoutManager;
     constructor(props){

@@ -21,7 +21,6 @@ export class Unit extends MyEventTarget{
     }
     change(){
         this.#counter++;
-        console.log("Change",this.#counter);
         for(let i of this.#listeners)i();
     }
 }
@@ -347,10 +346,10 @@ export class PlaceSession extends MyEventTarget{
     /**
      * @returns {TableSession}
      */
-    getLatestTableSession(table){
+    getLatestTableSession(table,createIfDoesntExist=true){
         const list = this.tables[table];
         if(list)return list.at(-1);
-        else return this.#session(table); //Set list and return first element
+        else if(createIfDoesntExist)return this.#session(table); //Set list and return first element
     }
     /**
      * Get a list of every single order made on this session sorted by time (for listener view) (including closed sessions?)

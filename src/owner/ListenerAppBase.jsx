@@ -1,10 +1,13 @@
-import React, { createRef, useEffect, useMemo, useState } from "react";
-import { ListenerClientHandler } from "../common/ListenerSocket";
-import { PlaceSession, Unit } from "../common/VirtualSessions";
-import { EventComponent } from "../common/Event";
-import { API } from "../common/API";
+import React, { createContext, createRef, useContext, useEffect, useMemo, useState } from "react";
+import { ListenerClientHandler } from "../common/ListenerSocket.js";
+import { PlaceSession, Unit } from "../common/VirtualSessions.js";
+import { EventComponent } from "../common/Event.js";
+import { API } from "../common/API.js";
 import { LayoutVisualizer } from "./LayoutSVG.jsx";
 import SynchronizedLayoutManager from "./SynchronizedLayoutSVG.jsx";
+
+export const ListenerAppContext = createContext();
+export const useListenerApp = ()=>useContext(ListenerAppContext);
 
 export default class ListenerApp extends Unit{
     layoutSVG;
@@ -37,10 +40,10 @@ export default class ListenerApp extends Unit{
     static instance;
     static menuPromise
     #f=m=>this.#onWSMessage(m); //Set a function to be able to unbind later
-    constructor(props){
-        super(props);
+    constructor(placeId){
+        super("ListenerApp");
         
-        this.placeId=props.placeId;
+        this.placeId=placeId;
         this.state = {
             selectedTable:false,
             fullscreen:false
@@ -49,11 +52,11 @@ export default class ListenerApp extends Unit{
         
     }
     async initialize(){
-        await this.#initialize();
+        await this._initialize();
         this.isLoaded = true;
         this.change();
     }
-    async #initialize(){
+    async _initialize(){
         const r = await API(`/place/menu/${this.placeId}`)
         const o={};
         const cats={};
@@ -81,7 +84,6 @@ export default class ListenerApp extends Unit{
 
             this.layoutManager = new SynchronizedLayoutManager(this.placeId,this.placeSession);
             this.layoutManager.initialize();
-            this.layoutSVG = <LayoutVisualizer key={this.sess_changes++} placeId={this.placeId} placeSession={this.placeSession}/>;
 
             this.do("session-refresh",this.placeSession);
             this.isConnected = true;
@@ -142,6 +144,26 @@ export default class ListenerApp extends Unit{
     }
     rejectOrder(table,message){
         return this.wsh.send({type:"reject-order",table,message})
+    }
+    changeCartEntry(table,key,newEntry){
+        this.wsh.send({type:"change-in-cart",table,key,newEntry});
+    }
+    addToCart(table,entry){
+        this.wsh.send({type:"add-to-cart",table,entry});
+    }
+    removeFromCart(table,key){
+        this.wsh.send({type:"remove-from-cart",table,key});
+    }
+    cancelOrder(table){
+        this.wsh.send({type:"cancel-order",table});
+        this.forceUpdate();
+    }
+    onPaid(table){
+        this.wsh.send({type:"pay",table})
+    }
+    sendOrder(table){
+        this.wsh.send({type:"send-order",table});
+        this.forceUpdate();
     }
     serializeOrder(order){
         console.log(order)

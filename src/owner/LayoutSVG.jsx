@@ -1,9 +1,6 @@
-import { createContext, createRef, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
-import { EventComponent } from "../common/Event";
-import { API } from "../common/API";
+import { createContext, useContext, useEffect, useSyncExternalStore } from "react";
 import LayoutManager from "./LayoutManager.js";
-import SynchronizedLayoutManager from "./SynchronizedLayoutSVG.jsx";
-import { useWatchApp } from "./App3.jsx";
+import { useListenerApp } from "./ListenerAppBase.jsx";
 export const TABLE_REGEX = /^[A-Za-z0-9_-]{4}$/g; //I need to organize ts
 
 /**
@@ -37,7 +34,7 @@ function Area({rect,tag}){
 }
 
 function Table({tag,id,position,size,blink:_blink={from:"gray",to:"gray"}}){
-    const app = useWatchApp();
+    const app = useListenerApp();
     const manager = app.layoutManager;
     const blink = manager.blinks[id];
     const selected = app.selectedTable==id;
@@ -80,8 +77,7 @@ const LayoutManagerContext = createContext();
  */
 export const useLayoutManager = ()=>useContext(LayoutManagerContext);
 
-export function LayoutVisualizer(){
-    const app = useWatchApp();
+export function LayoutVisualizer({app}){
     const manager = app.layoutManager;
 
     useEffect(()=>{

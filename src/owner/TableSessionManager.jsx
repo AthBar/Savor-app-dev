@@ -1,8 +1,5 @@
 import { useEffect, useState, useSyncExternalStore } from "react";
-import { useLayoutManager } from "./LayoutSVG";
-import ListenerApp from "./ListenerAppBase";
-import LayoutManager from "./LayoutManager";
-import { useWatchApp } from "./App3";
+import { useListenerApp } from "./ListenerAppBase";
 
 function OrderOverviewDish({dish}){
     return  <div className="order-overview-dish" style={{"--cc":Math.min(5,Math.ceil(dish.ingredients.length/5))}}>
@@ -21,7 +18,7 @@ function OrderOverviewDish({dish}){
 }
 
 function OrderButtons({order}){
-    const app = useWatchApp();
+    const app = useListenerApp();
     
     useSyncExternalStore(order.subscription,()=>order.updateCounter);
 
@@ -80,7 +77,7 @@ function OrderHistoryOverview({tableSession,setOrder}){
             </div>
 }
 export default function TableSessionManager(){
-    const app = useWatchApp();
+    const app = useListenerApp();
     const [order, setOrder] = useState(null);
 
     useSyncExternalStore(app.subscription,()=>app.selectedTable);
