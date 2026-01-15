@@ -34,11 +34,13 @@ window.__vite_plugin_react_preamble_installed__=true
   let img = new Image();
   img.src = "/images/logo.png";
   img.id="loading-screen";
-  img.onload = ()=>{
+  const f = ()=>{
     document.body.removeChild(window.loadingElement);
     document.body.appendChild(img);
     window.loadingElement=img;
   }
+  img.addEventListener("load",f);
+  addEventListener("DOMContentLoaded",img.removeEventListener("load",f));
 </script>
 <script type="module" src="/src/user/main.jsx"></script>
 </body>

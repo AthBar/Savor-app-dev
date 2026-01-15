@@ -39,5 +39,6 @@ const ROOT = createRoot(document.querySelector("div#root"));
 ROOT.render(<_WatchApp/>);
 
 window.addEventListener("DOMContentLoaded",()=>{
-    if(window.loadingElement)window.loadingElement.style.display = "none";
+    const el = document.querySelector("#loading-screen");
+    if(el)el.style.display = "none";
 })

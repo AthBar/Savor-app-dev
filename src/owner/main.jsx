@@ -10,8 +10,9 @@ ROOT.render(<BrowserRouter>
 </Routes>
 </BrowserRouter>);
 window.addEventListener("DOMContentLoaded",()=>{
-    if(window.loadingElement)window.loadingElement.style.display = "none";
-});
+    const el = document.querySelector("#loading-screen");
+    if(el)el.style.display = "none";
+})
 
 export function _start(){
 console.log(
