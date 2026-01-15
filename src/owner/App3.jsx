@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router";
 import { ConnectionStateVisualizer } from "../common/WshVisuals.jsx";
 import ListenerApp, { TableSessionManager } from "./ListenerAppBase.jsx";
 import PlaceStateManager from "./PlaceStateManager";
