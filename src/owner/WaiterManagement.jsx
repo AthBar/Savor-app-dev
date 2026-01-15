@@ -1,6 +1,6 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState, useSyncExternalStore } from "react";
 import ListenerApp from "./ListenerAppBase";
-import OwnerApp3 from "./App3";
+import OwnerApp3, { useWatchApp } from "./App3";
 
 function HideablePin({ pin }) {
   const [visible, setVisible] = useState(true);
@@ -56,58 +56,28 @@ function PinDisplay({id,pin}){
             </div>
 }
 
-class WaiterWidget extends React.Component{
-    self;
-    constructor(props){
-        super(props);
-        this.self=props.self;
-        this.state = {
-            title:this.self.title,
-            pin:this.self.pin
-        }
-    }
-    #f=()=>this.setState({
-        title:this.self.title,
-        pin:this.self.pin
-    });
-    componentDidMount(){
-        this.self.on("change",this.#f);
-    }
-    componentWillUnmount(){
-        this.self.off("change",this.#f);
-    }
-    setName(title){
-        ListenerApp.instance.wsh.send({
-            type:"set-waiter",
-            id:this.self.id,
-            title
-        });
-    }
-    //Has errors but I assume proper input
-    pinToString(pin){
-        const PIN_LENGTH = 6;
-        return "0".repeat(PIN_LENGTH-pin.length)+pin;
-    }
-    render(){
-        if(this.state.title==false)
-            return <div className="waiter-instance">
-                <button className="green-wide-button" onClick={()=>this.setName(`Υπάλληλος ${Math.floor(this.self.id)+1}`)}>+</button>
-            </div>
+function WaiterWidget({self,setName}){
+    const {title,pin} = self;
+    
+    useSyncExternalStore(self.subscription,()=>self.updateCounter);
+
+    if(title==false)
         return <div className="waiter-instance">
-                <div>Όνομα:</div>
-                <input type="text" defaultValue={this.state.title} onBlur={e=>this.setName(e.target.value)}/>
-                <div>PIN:</div>
-                <PinDisplay id={this.self.id} pin={this.state.pin}/>
-                <button className="delete" onClick={()=>this.setName(false)}/>
+            <button className="green-wide-button" onClick={()=>setName(`Υπάλληλος ${Math.floor(self.id)+1}`)}>+</button>
         </div>
-    }
+    return <div className="waiter-instance">
+            <div>Όνομα:</div>
+            <input type="text" defaultValue={title} onBlur={e=>setName(e.target.value)}/>
+            <div>PIN:</div>
+            <PinDisplay id={self.id} pin={pin}/>
+            <button className="delete" onClick={()=>setName(false)}/>
+    </div>
 }
 
 const waiterContext = React.createContext({waiters:{}});
 
 export default function WaiterManager(){
-    const app = ListenerApp.instance;
-    WaiterManager.instance = this;
+    const app = useWatchApp();
     const [waiters,setWaiters] = useState(app.placeSession.waiters);
     const [rerollTime,setRerollTime] = useState(0);
     app.on("session-refresh",sess=>setWaiters(sess.waiters));
@@ -117,7 +87,7 @@ export default function WaiterManager(){
         if(now-rerollTime<1000)return;
         if(!waiters[id])return;
         setRerollTime(now);
-        return ListenerApp.instance.wsh.send({type:"reroll-waiter-pin",id});
+        return app.wsh.send({type:"reroll-waiter-pin",id});
     }
 
     function WhyPopup(){
@@ -130,9 +100,18 @@ export default function WaiterManager(){
                     </p>
                     <div>
                         <hr/>
-                        <button className="green-wide-button" onClick={()=>window.popup(false)}>OK</button>
+                        <button className="green-wide-button" onClick={()=>window.popup?.(false)}>OK</button>
                     </div>
                 </div>
+    }
+
+    function setName(id){
+        return title=>
+            app.wsh.send({
+                type:"set-waiter",
+                id,
+                title
+            });
     }
 
     const waiterList = Object.values(waiters);
@@ -144,7 +123,7 @@ export default function WaiterManager(){
                 </div>
                 <div className="waiter-list" key="list">
                     {waiterList.map((w,i)=>
-                        <WaiterWidget self={w} key={i}/>
+                        <WaiterWidget self={w} key={i} setName={setName(w.id)}/>
                     )}
                     <div className="waiter-instance" style={{padding:0}}>
                         <button style={{width:"100%",border:"1px solid",borderRadius:"12px",background:"white",cursor:"pointer"}} onClick={()=>window.popup(<WhyPopup/>)}>+</button>

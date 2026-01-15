@@ -1,13 +1,12 @@
-import React from "react";
-import LayoutSVG from "./LayoutSVG";
-import { ListenerClientHandler } from "../common/ListenerSocket";
+import LayoutManager from "./LayoutManager.js";
 
-export default class SynchronizedLayoutSVG extends LayoutSVG{
-    placeSession;#onchange=()=>window.requestAnimationFrame(()=>this.#syncTableBlinks());
-    constructor(props){
-        super(props);
-        this.placeSession = props.placeSession;
-        this.placeSession.on("change",this.#onchange);
+export default class SynchronizedLayoutManager extends LayoutManager{
+    placeSession;
+    constructor(placeId,placeSession){
+        super(placeId,false);
+        this.placeSession = placeSession;
+        placeSession.on("change",()=>this.#syncTableBlinks());
+        this.on("initialized",()=>this.#syncTableBlinks())
     }
     tableColor(table,startColor,endColor=startColor){
         return this.setBlink(table,startColor,endColor);
@@ -44,32 +43,5 @@ export default class SynchronizedLayoutSVG extends LayoutSVG{
             }
             this.tableColor(table,startColor,endColor);
         }
-        this.forceUpdate();
-    }
-    componentDidMount(){
-        LayoutSVG.prototype.componentDidMount.call(this);
-        this.#onchange();
-        this.on("layout-parsed",()=>this.#onchange(),true)
-    }
-    #syncBlinksFor(table){
-        const sess = this.placeSession.tables[table].at(-1);
-        const lastOrder = sess.orders.at(-1);
-        const black = sess.connects>0?"black":"gray";
-        if(lastOrder){
-            if(lastOrder.rejected){
-                this.tableColor(table,black);
-                return;
-            }
-            if(!lastOrder.accepted){
-                this.tableColor(table,black,"#a00");
-                return;
-            }
-            if(!lastOrder.delivered){
-                this.tableColor(table,"#dd0");
-                return;
-            }
-        }
-        this.tableColor(table,black)
     }
 }
-window.SyncLayoutSVG = SynchronizedLayoutSVG;

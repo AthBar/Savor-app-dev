@@ -1,7 +1,10 @@
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
 import { ConnectionStateVisualizer } from "../common/WshVisuals.jsx";
-import ListenerApp, { TableSessionManager } from "./ListenerAppBase.jsx";
+import ListenerApp from "./ListenerAppBase.jsx";
 import PlaceStateManager from "./PlaceStateManager";
+import TableSessionManager from "./TableSessionManager.jsx";
 import WaiterManager from "./WaiterManagement";
+import { LayoutVisualizer } from "./LayoutSVG.jsx";
 
 function NoFullscreen(){
     return <div>
@@ -37,91 +40,143 @@ function PostTerminationPopup(){
     </div>
 }
 
-//[{code: "S002", count: 3, ingredients: ["λάχανο", "μαρούλι", "ντομάτα", "αγγούρι"]}]
-let popupOpened=false;
-export default class OwnerApp3 extends ListenerApp{
-    #zoom=5;
-    zoomSensitivity = 1;
-    #f=e=>this.onClose(e);
-    
-    static instance;
-    constructor(props){
-        super(props);
-        
-        //Load the electron overlay if detected
-        if(window.$savor)import("../watch/overlay-entry.jsx");
+const WatchAppContext = createContext();
+/**
+ * 
+ * @returns {ListenerApp}
+ */
+export const useWatchApp = ()=>useContext(WatchAppContext);
 
-        this.state = {
-            ...this.state,
-            pad:this.#zoom
-        }
-        this.wsh.on("auth-error",e=>{
-            console.log("Auth error: ",e);debugger;
-            //location.replace("/auth/login")
-        });
-        this.wsh.on("close",this.#f);
-        OwnerApp3.instance = this;
-    }
-    componentWillUnmount(){
-        this.off("terminated",this.#f);
-    }
-    _PostTerminationPopup(){
-        return <PostTerminationPopup nav={nav}/>
-    }
-    onClose(e){
+export default function OwnerApp4({placeId}){
+    const app = useMemo(()=>new ListenerApp({placeId}),[]);
+    const [_,redraw]=useState(0);
+
+    function onClose(e){
         console.log(e)
         if(e.reason=="terminated"){
             window.popup(<PostTerminationPopup/>,"terminated",true);
             ConnectionStateVisualizer.disable();
         }
     }
-    zoom(dY){
-        const newZoom = this.#zoom+dY;
-        if(newZoom<0||newZoom>40)return;
 
-        this.#zoom = newZoom;
-        this.setState({pad:this.#zoom});
-    }
-    open(){
-        this.wsh.send({type:"open"});
-    }
-    close(){
-        this.wsh.send({type:"close"});
-    }
-    terminate(){
-        this.wsh.send({type:"terminate"});
-    }
-    render(){
-        return (
-            <div className="listener-app-3">
-                <ConnectionStateVisualizer wsh={this.wsh}/>
-                <div className="listener-layout-view listener-top-center" style={{padding:`0 ${this.state.pad}%`}} onWheel={e=>this.zoom(e.deltaY*this.zoomSensitivity/100)}>
-                    <div className="layout-edit-btn-wrapper">
-                        <a href={`/dashboard/${this.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>
-                    </div>
-                    {this.layoutSVG||
-                        <div style={{
-                            textAlign:"center",
-                            fontSize:"3em",
-                            justifyContent:"center",
-                            display:"flex",
-                            flexDirection:"column",
-                            height:"100%"}}>
-                                Φόρτωση κάτοψης...
-                        </div>
-                    }
+    useEffect(()=>{
+        app.initialize()
+        .then(()=>app.wsh.on("close",onClose));
+        
+        return ()=>app.wsh.off("close",onClose);
+    },[app]);
+
+    useSyncExternalStore(app.subscription,()=>app.isConnected);
+
+    //useEffect(()=>{setTimeout(()=>redraw(_+1),1000)});
+
+    if(!app.isConnected)return "Loadingstate";
+    return <WatchAppContext.Provider value={app}>
+        <div className="listener-app-3">
+            <ConnectionStateVisualizer wsh={app.wsh}/>
+            <div className="listener-layout-view listener-top-center" style={{padding:"15px"}}>
+                <div className="layout-edit-btn-wrapper">
+                    <a href={`/dashboard/${app.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>
                 </div>
-                <div className="listener-full-left">
-                    <WaiterManager key={this.sess_changes}/>
-                </div>
-                <div className="listener-bottom-center" style={{borderTop:"1px solid"}}>
-                    <TableSessionManager table={this.state.selectedTable}/>
-                </div>
-                <div className="listener-full-right">
-                    <PlaceStateManager/>
-                </div>
+                <LayoutVisualizer manager={app.layoutManager}/>
             </div>
-        );
-    }
+            <div className="listener-full-left">
+                <WaiterManager key={app.sess_changes}/>
+            </div>
+            <div className="listener-bottom-center" style={{borderTop:"1px solid"}}>
+                <TableSessionManager/>
+            </div>
+            <div className="listener-full-right">
+                <PlaceStateManager/>
+            </div>
+        </div>
+    </WatchAppContext.Provider>;
 }
-window.LiveViewApp = OwnerApp3;
+OwnerApp4.instance = {
+    open:()=>this.wsh.send({type:"open"}),
+    close:()=>this.wsh.send({type:"close"}),
+    terminate:()=>this.wsh.send({type:"terminate"})
+};
+
+//[{code: "S002", count: 3, ingredients: ["λάχανο", "μαρούλι", "ντομάτα", "αγγούρι"]}]
+// let popupOpened=false;
+// export default class OwnerApp3 extends ListenerApp{
+//     #zoom=5;
+//     zoomSensitivity = 1;
+//     #f=e=>this.onClose(e);
+    
+//     static instance;
+//     constructor(props){
+//         super(props);
+        
+//         //Load the electron overlay if detected
+//         if(window.$savor)import("../watch/overlay-entry.jsx");
+
+//         this.state = {
+//             ...this.state,
+//             pad:this.#zoom
+//         }
+//         this.wsh.on("auth-error",e=>{
+//             console.log("Auth error: ",e);debugger;
+//             //location.replace("/auth/login")
+//         });
+//         this.wsh.on("close",this.#f);
+//         OwnerApp3.instance = this;
+//     }
+//     onClose(e){
+//         console.log(e)
+//         if(e.reason=="terminated"){
+//             window.popup(<PostTerminationPopup/>,"terminated",true);
+//             ConnectionStateVisualizer.disable();
+//         }
+//     }
+//     zoom(dY){
+//         const newZoom = this.#zoom+dY;
+//         if(newZoom<0||newZoom>40)return;
+
+//         this.#zoom = newZoom;
+//         this.setState({pad:this.#zoom});
+//     }
+//     open(){
+//         this.wsh.send({type:"open"});
+//     }
+//     close(){
+//         this.wsh.send({type:"close"});
+//     }
+//     terminate(){
+//         this.wsh.send({type:"terminate"});
+//     }
+//     render(){
+//         return (
+//             <div className="listener-app-3">
+//                 <ConnectionStateVisualizer wsh={this.wsh}/>
+//                 <div className="listener-layout-view listener-top-center" style={{padding:`0 ${this.state.pad}%`}} onWheel={e=>this.zoom(e.deltaY*this.zoomSensitivity/100)}>
+//                     <div className="layout-edit-btn-wrapper">
+//                         <a href={`/dashboard/${this.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>
+//                     </div>
+//                     {this.layoutSVG||
+//                         <div style={{
+//                             textAlign:"center",
+//                             fontSize:"3em",
+//                             justifyContent:"center",
+//                             display:"flex",
+//                             flexDirection:"column",
+//                             height:"100%"}}>
+//                                 Φόρτωση κάτοψης...
+//                         </div>
+//                     }
+//                 </div>
+//                 <div className="listener-full-left">
+//                     <WaiterManager key={this.sess_changes}/>
+//                 </div>
+//                 <div className="listener-bottom-center" style={{borderTop:"1px solid"}}>
+//                     <TableSessionManager/>
+//                 </div>
+//                 <div className="listener-full-right">
+//                     <PlaceStateManager/>
+//                 </div>
+//             </div>
+//         );
+//     }
+// }
+// window.LiveViewApp = OwnerApp3;

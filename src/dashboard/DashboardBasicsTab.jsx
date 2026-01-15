@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router";
-import LayoutSVG from "../owner/LayoutSVG";
 import DashboardTab from "./DashboardTab";
 import { useDashboard } from "./Dashboard";
+import { LayoutVisualizer } from "../owner/LayoutSVG";
+import { useMemo } from "react";
+import LayoutManager from "../owner/LayoutManager";
 
 function ViewButton({placeId}){
     const nav = useNavigate();
@@ -10,10 +12,12 @@ function ViewButton({placeId}){
 
 export default function DashboardBasicsTab(){
     const {place} = useDashboard();
+    const manager = useMemo(()=>new LayoutManager(place.id,true));
+
     return <div className="dashboard-basics-tab-container">
         <h1 style={{textAlign:"center"}}>Όνομα: <span contentEditable suppressContentEditableWarning>{place.name}</span></h1>
         <div style={{width:"50%"}}>
-            <LayoutSVG placeId={place.id} viewOnly/>
+            <LayoutVisualizer manager={manager}/>
         </div>
         <ViewButton placeId={place.id}/>
     </div>

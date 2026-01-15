@@ -18,7 +18,7 @@ function MenuItem({self}){
         app.startDishEditing(self.code);
     }
 
-    const canOrder = !useApp().app.place.status.closed;
+    const canOrder = app.canOrder;
     return (
         <div className="menu-item" onClick={()=>canOrder?select():null}>
             <div className="item-title">

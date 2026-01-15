@@ -1,15 +1,33 @@
 import MyEventTarget from "./Event";
 
-class Unit extends MyEventTarget{
+export class Unit extends MyEventTarget{
     type="unit";
+    #counter=0;
+    #listeners=new Set();
     constructor(type){
         super();
         this.type=type;
+        this.on("change",()=>this.change());
+    }
+    #subscribe(listener){
+        this.#listeners.add(listener);
+        //return ()=>this.#listeners.delete(listener);
+    }
+    get subscription(){
+        return this.#subscribe.bind(this);
+    }
+    get updateCounter(){
+        return this.#counter;
+    }
+    change(){
+        this.#counter++;
+        console.log("Change",this.#counter);
+        for(let i of this.#listeners)i();
     }
 }
 
 export class Waiter extends Unit{
-    id;#title=false;#pin;
+    id;#title=false;#pin;changeCount;
     constructor(id,pin){
         super("waiter");
         this.id=id;
@@ -98,7 +116,7 @@ class Order extends Unit{
     }
 }
 
-export class TableSession extends MyEventTarget{
+export class TableSession extends Unit{
     place;
     table;
     /**

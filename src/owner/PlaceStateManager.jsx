@@ -1,12 +1,12 @@
-import { useEffect } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { useState } from "react";
-import OwnerApp3 from "./App3";
+import OwnerApp3, { useWatchApp } from "./App3";
 import ListenerApp from "./ListenerAppBase";
 
 let timeout;
 //I realized react functions are the norm
 export default function PlaceStateManager(){
-    const app = OwnerApp3.instance;
+    const app = useWatchApp();
     const closed = app.placeSession.closed;
     const [active,setActive] = useState(false);
 
@@ -17,13 +17,15 @@ export default function PlaceStateManager(){
         timeout = setTimeout(()=>setActive(true),1000+1000*Math.random());
     },[closed]);
 
+    useSyncExternalStore(app.subscription,()=>app.updateCounter)
+
     const onClick = closed?()=>app.open():()=>app.close();
     const normalButton =<button className={closed?"green-wide-button":"delete-button"} onClick={onClick}>
                             {closed?"Άνοιγμα":"Κλείσιμο"}
                         </button>;
 
     let terminate;
-    if(closed){terminate=true;for(let i of Object.values(OwnerApp3.instance.placeSession.tables))if(!(terminate=!i.at(-1)?.isActive))break;}
+    if(closed){terminate=true;for(let i of Object.values(app.placeSession.tables))if(!(terminate=!i.at(-1)?.isActive))break;}
 
     function terminateF(){
         if(terminate)app.terminate();

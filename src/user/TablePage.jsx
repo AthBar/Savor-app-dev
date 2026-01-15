@@ -124,5 +124,8 @@ export default function TablePage(){
     const {app} = useApp();
 
     useSyncExternalStore(app.subscription,()=>app.place.status.closed);
-    return app.place.status.closed?<ClosedTablePage/>:<DefaultTablePage/>;
+    useSyncExternalStore(app.subscription,()=>app.hasConnected);
+
+    //Only show closed message if the app AND the WSH is closed
+    return app.cantConnectBecausePlaceIsClosed?<ClosedTablePage/>:<DefaultTablePage/>;
 }

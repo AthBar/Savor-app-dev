@@ -10,6 +10,7 @@ export default class UserApp{
     menu;
     destination;
     rejection=null;
+    hasConnected=false;
     /**
      * @type {TableSession}
      */
@@ -95,6 +96,7 @@ export default class UserApp{
         console.log(e);
     }
     #sync(){
+        if(!this.hasConnected)this.hasConnected=true;
         const dest = this.destination;
         this.tableSession = TableSession.import(dest.placeId,dest.table,this.wsh.syncData);
         this.#change();
@@ -156,8 +158,11 @@ export default class UserApp{
     get cart(){
         return this.tableSession.cart;
     }
+    get cantConnectBecausePlaceIsClosed(){
+        return this.place.status.closed&&!this.hasConnected;
+    }
     get canOrder(){
-        return !this.place.status.closed&&!this.tableSession.activeOrder;
+        return !this.cantConnectBecausePlaceIsClosed&&!this.tableSession.activeOrder;
     }
     get canLeave(){
         //No pending order, no money owed and having at least ordered one thing

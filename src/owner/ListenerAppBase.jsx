@@ -1,96 +1,12 @@
-import React, { createRef, useEffect, useState } from "react";
+import React, { createRef, useEffect, useMemo, useState } from "react";
 import { ListenerClientHandler } from "../common/ListenerSocket";
-import { PlaceSession } from "../common/VirtualSessions";
+import { PlaceSession, Unit } from "../common/VirtualSessions";
 import { EventComponent } from "../common/Event";
 import { API } from "../common/API";
-import SynchronizedLayoutSVG from "./SynchronizedLayoutSVG";
+import { LayoutVisualizer } from "./LayoutSVG.jsx";
+import SynchronizedLayoutManager from "./SynchronizedLayoutSVG.jsx";
 
-function OrderOverviewDish({dish}){
-    return  <div className="order-overview-dish" style={{"--cc":Math.min(5,Math.ceil(dish.ingredients.length/5))}}>
-                <div className="title">{dish.count}x {dish.title}</div>
-                <hr/>
-                {dish.ingredients.length>0?
-                <ul>
-                    {dish.ingredients.map((r,i)=>
-                        <li className="dish-ingredient" key={i}>{r[0].toUpperCase()+r.slice(1)}</li>
-                    )}
-                </ul>
-                :<div className="comment empty" style={{margin:"25px 0"}}>Καμία τροποίηση</div>}
-                <hr/>
-                {dish.info?.comments?<div className="comment">Σχόλια: {dish.info.comments}</div>:<div className="comment empty">Κανένα σχόλιο</div>}
-            </div>
-}
-
-function OrderButtons({order}){
-    const btn = order=>{
-        if(order.delivered)return <div className="order-complete">Ολοκληρώθηκε</div>;
-        if(order.rejected)return <button className="order-reject">Απορρίφθηκε από την κουζίνα</button>;
-        if(order.accepted)return <button className="order-deliver" onClick={()=>ListenerApp.instance.deliverOrder(order.session.table)}>Παράδοση παραγγελίας</button>;
-        else return [
-                <button className="order-accept" onClick={()=>ListenerApp.instance.acceptOrder(order.session.table)} key="acc">Αποδοχή</button>,
-                <button className="order-reject" onClick={()=>ListenerApp.instance.rejectOrder(order.session.table)} key="rej">Απόρριψη</button>
-            ];
-    }
-    return <div className="order-overview-bottom">{btn(order)}</div>;
-}
-
-function OrderViewer({order, menu}){
-    const cart = Object.values(order?.cart||{});
-    if(!Array.isArray(cart)||cart.length<=0)return <div className="order-overview empty"></div>
-    return <div className="order-overview">
-        <div className="order-overview-main">
-            {cart.map((r,i)=>
-                <OrderOverviewDish key={i} dish={{...menu[r.code],...r}}/>
-            )}
-        </div>
-        <OrderButtons order={order}/>
-    </div>;
-}
-/**
- * 
- * @param {Date} date 
- * @returns 
- */
-function timeString(date){
-    const n = i=>i>=10?i:`0${i}`;
-    return `${date.getHours()}:${n(date.getMinutes())}.${n(date.getSeconds())}`;
-}
-function OrderHistoryOverview({orderList,table,setOrder}){
-    return  <div className="order-history-container">
-                {
-                    Array.isArray(orderList)&&orderList.length>0?
-                    orderList.toReversed().map((r,i)=>
-                        <div key={i} className={"history-order"+(!r.accepted&&!r.rejected&&!r.delivered?" pending-order":"")} onClick={()=>setOrder(r)}>{table}-{orderList.length-i} ({timeString(r.time)})</div>
-                    ):
-                    <div className="no-orders content-centered">Καμία παραγγελία</div>
-                }
-            </div>
-}
-export function TableSessionManager({table}){
-    const [_,redraw] = useState(0);
-    const [order, setOrder] = useState(null);
-
-    useEffect(()=>setOrder(false),[table]);
-
-    if(!table)return <div className="no-orders content-centered">Πατήστε πάνω σε ένα τραπέζι για να δείτε τις παραγγελίες του</div>;
-
-    const sess = ListenerApp.instance.placeSession.getLatestTableSession(table);
-    const orderList = sess.orders;
-    if(sess)sess.on("change",()=>redraw(_+1),true);
-
-    return <div className="table-session-viewer">
-        <div className="left">
-            <h2>Τραπέζι {table}</h2>
-            <OrderHistoryOverview orderList={orderList} table={table} setOrder={setOrder}/>
-            <div className="bottom content-centered">
-                Συνδέσεις: {sess.connects}
-            </div>
-        </div>
-        <OrderViewer menu={ListenerApp.instance.menu} order={order}/>
-    </div>;
-}
-
-export default class ListenerApp extends EventComponent{
+export default class ListenerApp extends Unit{
     layoutSVG;
     placeId;
     place;
@@ -109,6 +25,11 @@ export default class ListenerApp extends EventComponent{
 
     sessions={};
     blinks={};
+    isLoaded=false;
+    isConnected=false;
+
+    selectedTable;
+    layoutManager;
 
     /**
      * @type {ListenerApp}
@@ -125,9 +46,31 @@ export default class ListenerApp extends EventComponent{
             fullscreen:false
         }
         window.app=this;
+        
+    }
+    async initialize(){
+        await this.#initialize();
+        this.isLoaded = true;
+        this.change();
+    }
+    async #initialize(){
+        const r = await API(`/place/menu/${this.placeId}`)
+        const o={};
+        const cats={};
+        const categorized={};
+        for(let i of r.data){
+            o[i.code]=i;
+            cats[i.category] = true;
+            if(categorized[i.category])categorized[i.category].push(i);
+            else categorized[i.category] = [i];
+        }
+        this.menuByCategory = categorized;
+        this.menuCategories = Object.keys(cats);
+        this.menu = o;
 
-        this.wsh = new ListenerClientHandler(props.placeId);
-        this.placeSession = new PlaceSession(props.placeId);
+        
+        this.wsh = new ListenerClientHandler(this.placeId);
+        this.placeSession = new PlaceSession(this.placeId);
         
 
         this.wsh.on("handshake-finished",()=>{
@@ -136,34 +79,29 @@ export default class ListenerApp extends EventComponent{
             this.placeSession = PlaceSession.import(this.placeId,this.wsh.syncData);
             this.placeSession.on("change",this.#u);
 
-            this.layoutSVG = <SynchronizedLayoutSVG key={this.sess_changes++} placeId={this.placeId} selectedTable={this.state.selectedTable} onTableSelect={t=>this.selectTableByCode(t)} placeSession={this.placeSession}/>;
+            this.layoutManager = new SynchronizedLayoutManager(this.placeId,this.placeSession);
+            this.layoutManager.initialize();
+            this.layoutSVG = <LayoutVisualizer key={this.sess_changes++} placeId={this.placeId} placeSession={this.placeSession}/>;
 
             this.do("session-refresh",this.placeSession);
-            this.forceUpdate();
+            this.isConnected = true;
+            this.change();
         });
         this.wsh.on("message",this.#f);
 
-        ListenerApp.menuPromise = API(`/place/menu/${props.placeId}`).then(r=>{
-            const o={};
-            const cats={};
-            const categorized={};
-            for(let i of r.data){
-                o[i.code]=i;
-                cats[i.category] = true;
-                if(categorized[i.category])categorized[i.category].push(i);
-                else categorized[i.category] = [i];
-            }
-            this.menuByCategory = categorized;
-            this.menuCategories = Object.keys(cats);
-            this.menu = o;
-        },console.log).catch(e=>console.log("Failed to load menu for listener app"));
+        this.place = {id:this.placeId,title:"Φόρτωση",session:this.placeSession};
 
-        this.place = {id:this.placeId,title:"Φόρτωση"};
-
-        ListenerApp.placePromise = API(`/place/view/${props.placeId}`).then(r=>{
+        API(`/place/view/${this.placeId}`).then(r=>{
             this.place.title=r.name;
         }).catch("error")
-        ListenerApp.instance = this;
+    }
+    selectTable(id){console.log("Selecting table",id)
+        this.selectedTable = id;
+        this.layoutManager.selectTable(id);
+        this.change();
+    }
+    forceUpdate(){
+        console.log("Change")
     }
     calculatePrice(entry){
         if(!this.menu)return 0;
@@ -179,7 +117,7 @@ export default class ListenerApp extends EventComponent{
         }
         return (basePrice+ingredientPrice)*(entry.count||1);
     }
-    #u = ()=>window.requestAnimationFrame(()=>this.forceUpdate());
+    #u = ()=>this.change();
     componentWillUnmount(){
         this.wsh.off("message",this.#f);
         this.placeSession.off("change",this.#u);
@@ -209,7 +147,16 @@ export default class ListenerApp extends EventComponent{
         console.log(order)
         return "hehe";
     }
-    #onWSMessage(msg){
+    open(){
+        this.wsh.send({type:"open"});
+    }
+    close(){
+        this.wsh.send({type:"close"});
+    }
+    terminate(){
+        this.wsh.send({type:"terminate"});
+    }
+    #onWSMessage(msg){console.log("WSH message ",msg);
         //Do all types that don't require table first
         switch(msg.type){
             case "state":return msg.open;
