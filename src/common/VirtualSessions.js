@@ -11,7 +11,7 @@ export class Unit extends MyEventTarget{
     }
     #subscribe(listener){
         this.#listeners.add(listener);
-        //return ()=>this.#listeners.delete(listener);
+        return ()=>this.#listeners.delete(listener);
     }
     get subscription(){
         return this.#subscribe.bind(this);

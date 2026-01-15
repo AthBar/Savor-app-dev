@@ -85,7 +85,6 @@ export function LayoutVisualizer({app}){
     },[manager]);
 
     useSyncExternalStore(manager.subscription,()=>manager.isLoaded);
-    useSyncExternalStore(app.subscription,()=>app.selectedTable);
 
     if(!manager.isLoaded)
         return <div style={

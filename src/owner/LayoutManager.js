@@ -11,7 +11,6 @@ export default class LayoutManager extends Unit{
     layout = {areas:[],tables:{}};
     blinks={};
     refs={};
-    selectedTable;
     viewOnly;
     isLoaded=false;
     
@@ -23,11 +22,6 @@ export default class LayoutManager extends Unit{
 
         
         LayoutManager.instance = this;
-    }
-    selectTable(id){
-        if(this.selectedTable===id)return;
-        this.selectedTable = id;
-        this.change();
     }
     containsTable(table){
         return Object.keys(this.blinks).includes(table);
@@ -62,6 +56,5 @@ export default class LayoutManager extends Unit{
     }
     setBlink(table,from,to){
         this.blinks[table] = {from,to};
-        this.change();
     }
 }

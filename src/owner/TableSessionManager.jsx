@@ -80,15 +80,14 @@ export default function TableSessionManager(){
     const app = useListenerApp();
     const [order, setOrder] = useState(null);
 
-    useSyncExternalStore(app.subscription,()=>app.selectedTable);
-
     const table = app.selectedTable;
-    useEffect(()=>setOrder(false),[table]);
+
+    useSyncExternalStore(app.subscription,()=>app.selectedTable);
+    useEffect(()=>setOrder(null),[table]);
+
     if(!table)return <div className="no-orders content-centered">Πατήστε πάνω σε ένα τραπέζι για να δείτε τις παραγγελίες του</div>;
 
     const sess = app.placeSession.getLatestTableSession(table);
-    const orderList = sess.orders;
-
     return <div className="table-session-viewer">
         <div className="left">
             <h2>Τραπέζι {table}</h2>

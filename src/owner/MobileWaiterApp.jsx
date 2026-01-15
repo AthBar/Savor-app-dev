@@ -212,14 +212,14 @@ function ProfilePage(){
 function LayoutPage({layout}){
     const app = useListenerApp();
     const nav = useNavigate();
-    const table = app.layoutManager.selectedTable;
+    const table = app.selectedTable;
 
-    useSyncExternalStore(app.subscription,()=>app.layoutManager.selectedTable);
+    useSyncExternalStore(app.subscription,()=>app.selectedTable);
 
     useEffect(()=>{
         if(!table)return;
         nav(`../${table}`);
-        return ()=>app.layoutManager.selectTable(null);
+        return ()=>app.selectTable(null);
     })
 
     return <div style={{padding:"16px"}}>
@@ -353,7 +353,6 @@ function CartEditPage({entryToEdit,table}){
             ingredient=>[ingredient,true]
         )
     );
-    //for(let i of entry.ingredients)ingredientObj[i]=true;
     return [<MenuDishOptions key="main"
                 table={table}
                 dish={dish.code}
@@ -489,11 +488,7 @@ export function MobileWaiterApp2({placeId,waiterID}){
     useSyncExternalStore(app.subscription,()=>app.isLoaded);
     useSyncExternalStore(app.subscription,()=>app.isConnected);
 
-    if(!app.isLoaded||!app.isConnected){
-        console.log("Nothing")
-        return null;
-    }
-    console.log("Something")
+    if(!app.isLoaded||!app.isConnected)return null;
     return <ListenerAppContext.Provider value={app}>
                 <Routes>
                     <Route path="layout" element={<LayoutPage layout={app.layoutSVG}/>}/>

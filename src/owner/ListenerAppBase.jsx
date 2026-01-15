@@ -44,10 +44,6 @@ export default class ListenerApp extends Unit{
         super("ListenerApp");
         
         this.placeId=placeId;
-        this.state = {
-            selectedTable:false,
-            fullscreen:false
-        }
         window.app=this;
         
     }
@@ -97,9 +93,8 @@ export default class ListenerApp extends Unit{
             this.place.title=r.name;
         }).catch("error")
     }
-    selectTable(id){console.log("Selecting table",id)
+    selectTable(id){
         this.selectedTable = id;
-        this.layoutManager.selectTable(id);
         this.change();
     }
     forceUpdate(){
@@ -119,7 +114,7 @@ export default class ListenerApp extends Unit{
         }
         return (basePrice+ingredientPrice)*(entry.count||1);
     }
-    #u = ()=>this.change();
+    #u = ()=>{if(false)this.change()};
     componentWillUnmount(){
         this.wsh.off("message",this.#f);
         this.placeSession.off("change",this.#u);
@@ -178,7 +173,7 @@ export default class ListenerApp extends Unit{
     terminate(){
         this.wsh.send({type:"terminate"});
     }
-    #onWSMessage(msg){console.log("WSH message ",msg);
+    #onWSMessage(msg){
         //Do all types that don't require table first
         switch(msg.type){
             case "state":return msg.open;
