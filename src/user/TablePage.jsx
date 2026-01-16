@@ -20,7 +20,7 @@ function CreateOrder({data}){
                 <div className="history-text">Παραγγελία</div>{Object.values(data.cart).map(
             (o,i)=> <div className="history-unit" key={i}>
                     <div className="history-joiner"/>
-                    <div className="history-text">{o.count>1?o.count+"x ":null}{app.menu[o.code].title}</div>
+                    <div className="history-text">{o.count>1?o.count+"x ":null}{app.menu[o.code]?.title}</div>
                 </div>
             )}
             </div>
