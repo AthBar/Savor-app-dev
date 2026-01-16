@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore } from "react";
+import { createContext, useContext, useEffect, useMemo, useState, useSyncExternalStore, version } from "react";
 import { ConnectionStateVisualizer } from "../common/WshVisuals.jsx";
 import PlaceStateManager from "./PlaceStateManager";
 import TableSessionManager from "./TableSessionManager.jsx";
@@ -43,7 +43,19 @@ function PostTerminationPopup(){
 
 export default function OwnerApp4({placeId}){
     const app = useMemo(()=>new WatchApp(placeId),[]);
-    const [_,redraw]=useState(0);
+    const [Overlay,setOverlay] = useState(null);
+
+    useEffect(()=>{console.log("Import")
+        // window.$savor  = {
+        //     send:console.log.bind(console,"Sending: "),
+        //     on:console.log.bind(console,"Listening: "),
+        //     version:1,
+        //     copyright:"Test"
+        // }
+        if(window.$savor)
+            import("../watch/Overlay.jsx").then(r=>{
+        setOverlay(()=>r.default)})
+    },[]);
 
     function onClose(e){
         console.log(e)
@@ -66,7 +78,8 @@ export default function OwnerApp4({placeId}){
 
     if(!app.isConnected)return "Loadingstate";
     return <ListenerAppContext.Provider value={app}>
-        <div className="listener-app-3">
+        <div className="listener-app-3">{console.log(Overlay)}
+            {Overlay&&<Overlay popupFunction={window.popup}/>}
             <ConnectionStateVisualizer wsh={app.wsh}/>
             <div className="listener-layout-view listener-top-center" style={{padding:"15px"}}>
                 <div className="layout-edit-btn-wrapper">
@@ -91,86 +104,3 @@ OwnerApp4.instance = {
     close:()=>this.wsh.send({type:"close"}),
     terminate:()=>this.wsh.send({type:"terminate"})
 };
-
-//[{code: "S002", count: 3, ingredients: ["λάχανο", "μαρούλι", "ντομάτα", "αγγούρι"]}]
-// let popupOpened=false;
-// export default class OwnerApp3 extends ListenerApp{
-//     #zoom=5;
-//     zoomSensitivity = 1;
-//     #f=e=>this.onClose(e);
-    
-//     static instance;
-//     constructor(props){
-//         super(props);
-        
-//         //Load the electron overlay if detected
-//         if(window.$savor)import("../watch/overlay-entry.jsx");
-
-//         this.state = {
-//             ...this.state,
-//             pad:this.#zoom
-//         }
-//         this.wsh.on("auth-error",e=>{
-//             console.log("Auth error: ",e);debugger;
-//             //location.replace("/auth/login")
-//         });
-//         this.wsh.on("close",this.#f);
-//         OwnerApp3.instance = this;
-//     }
-//     onClose(e){
-//         console.log(e)
-//         if(e.reason=="terminated"){
-//             window.popup(<PostTerminationPopup/>,"terminated",true);
-//             ConnectionStateVisualizer.disable();
-//         }
-//     }
-//     zoom(dY){
-//         const newZoom = this.#zoom+dY;
-//         if(newZoom<0||newZoom>40)return;
-
-//         this.#zoom = newZoom;
-//         this.setState({pad:this.#zoom});
-//     }
-//     open(){
-//         this.wsh.send({type:"open"});
-//     }
-//     close(){
-//         this.wsh.send({type:"close"});
-//     }
-//     terminate(){
-//         this.wsh.send({type:"terminate"});
-//     }
-//     render(){
-//         return (
-//             <div className="listener-app-3">
-//                 <ConnectionStateVisualizer wsh={this.wsh}/>
-//                 <div className="listener-layout-view listener-top-center" style={{padding:`0 ${this.state.pad}%`}} onWheel={e=>this.zoom(e.deltaY*this.zoomSensitivity/100)}>
-//                     <div className="layout-edit-btn-wrapper">
-//                         <a href={`/dashboard/${this.placeId}/edit-layout`} target="_blank" rel="noopener noreferrer" className="no-default">Επεξεργασία κάτοψης</a>
-//                     </div>
-//                     {this.layoutSVG||
-//                         <div style={{
-//                             textAlign:"center",
-//                             fontSize:"3em",
-//                             justifyContent:"center",
-//                             display:"flex",
-//                             flexDirection:"column",
-//                             height:"100%"}}>
-//                                 Φόρτωση κάτοψης...
-//                         </div>
-//                     }
-//                 </div>
-//                 <div className="listener-full-left">
-//                     <WaiterManager key={this.sess_changes}/>
-//                 </div>
-//                 <div className="listener-bottom-center" style={{borderTop:"1px solid"}}>
-//                     <TableSessionManager/>
-//                 </div>
-//                 <div className="listener-full-right">
-//                     <PlaceStateManager/>
-//                 </div>
-//             </div>
-//         );
-//     }
-// }
-// window.LiveViewApp = OwnerApp3;

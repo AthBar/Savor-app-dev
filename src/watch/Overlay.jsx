@@ -13,8 +13,9 @@ function SettingsMain(){
     //return [...Array(100)].map((r,i)=><div>Row {i}</div>)
 }
 
-function SettingsPopup(){
-    const {setPopup} = useContext(OverlayContext);
+export function SettingsPopup({close}){
+    const ctx = useContext(OverlayContext);
+    console.log(ctx)
 
     return <div className="container settings-page">
         <div>
@@ -28,40 +29,39 @@ function SettingsPopup(){
         </div>
         <div>
             <hr/>
-            <button className="green-wide-button" onClick={()=>setPopup(null)}>
+            <button className="green-wide-button" onClick={close}>
                 Εντάξει
             </button>
         </div>
     </div>;
 }
 
-export default function Overlay(){
-    const [popup,setPopup] = useState(null);
+export default function Overlay({popupFunction}){
+    const [errored,setErrored] = useState(false);
 
-    function PopupCover(){
-        if(!popup)return null;
-        document.getSelection()?.removeAllRanges()
-        return <div 
-                    className="backdrop full-size content-centered" 
-                    onClick={
-                        e=>setPopup(null)
-                    }
-                >
-            <div style={{display:"flex",justifyContent:"center"}}>
-                <div onClick={e=>e.stopPropagation()}>{popup}</div>
+    if(errored)return null;
+    if(!window.$savor){
+        return popupFunction(
+            <div className="fixed-centered big-container">
+                <h2>Δεν βρέθηκε η παγκόσμια μεταβλητή window.$savor</h2>
+                <hr/>
+                <div>
+                    Δεν είναι δυνατή η φόρτωση των εξωτερικών εργαλείων της εφαρμογής. Παρακαλώ ενημερώστε την υποστήριξη.<br/><br/>
+                    Μπορείτε ακόμη να διαχειριστείτε το μαγαζί σας κανονικά όσο αφορά το Savor, αλλά δεν θα μπορέσετε να χρησιμοποιήσετε
+                    λειτουργίες που αφορούν την συσκευή σας (και, κατ' επέκταση, άλλες συσκευές). Αυτό συμπεριλαμβάνει την εκτύπωση αποδείξεων/παραγγελιών.
+                    <br/><br/>Εαν διαβάζετε αυτό το μήνυμα υπάρχει σίγουρα (99.9%) κάποιο λάθος με την εγκατάστασή σας
+                </div>
+                <hr/>
+                <button className="green-wide-button" onClick={()=>{
+                    setErrored(true);
+                    popupFunction(null);
+                }}>OK</button>
             </div>
-        </div>
+        )
     }
-
-    if(!window.$savor)return (
-    <div className="fixed-centered" style={{fontSize:"1.5em"}}>
-        Δεν βρέθηκε η παγκόσμια μεταβλητή window.$savor. Δεν είναι δυνατή η φόρτωση των εργαλείων της εφαρμογής
-    </div>);
-    return  <OverlayContext.Provider value={{setPopup}}>
-                {popup?<PopupCover key="popup"/>:
-                <div className="overlay container right hoverable" style={{bottom:"70px"}} key="settings-button">
-                    
-                    <div className="print" onClick={()=>setPopup(popup?null:<SettingsPopup/>)}></div>
-                </div>}
-            </OverlayContext.Provider>
+    return  <div className="overlay container right hoverable" style={{bottom:"70px"}} key="settings-button">
+                <div className="print" 
+                    onClick={()=>popupFunction(<SettingsPopup close={()=>popupFunction(null)}/>)}
+                />
+            </div>
 }
